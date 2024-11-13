@@ -5,13 +5,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
+import { Moon, Sun } from "lucide-react";
+import { useTheme } from "next-themes";
 
-// Initialize MovieDb (you'll need to add your API key as an environment variable)
+// Initialize MovieDb
 const moviedb = new MovieDb(import.meta.env.VITE_TMDB_API_KEY);
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
+  const { theme, setTheme } = useTheme();
 
   const { data: trendingMovies, isLoading } = useQuery({
     queryKey: ["trending"],
@@ -33,7 +36,19 @@ const Index = () => {
   return (
     <div className="min-h-screen p-4 md:p-8 font-poppins">
       <div className="max-w-7xl mx-auto">
-        <h1 className="text-4xl font-bold mb-8 text-center">Movie Explorer</h1>
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-bold text-center">Movie Explorer</h1>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            className="rounded-full"
+          >
+            <Sun className="h-6 w-6 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+            <Moon className="absolute h-6 w-6 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            <span className="sr-only">Toggle theme</span>
+          </Button>
+        </div>
         
         <div className="flex gap-4 mb-8">
           <Input
