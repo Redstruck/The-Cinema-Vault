@@ -52,7 +52,7 @@ const Index = () => {
   );
 
   return (
-    <div className="min-h-screen p-4 md:p-8 font-poppins">
+    <div className="min-h-screen p-4 md:p-8">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
           <h1 className="text-4xl font-bold text-center">Trending Movies Explorer</h1>
@@ -92,6 +92,12 @@ const Index = () => {
                 </CardContent>
               </Card>
             ))}
+          </div>
+        ) : filteredMovies?.length === 0 ? (
+          <div className="text-center py-8">
+            <p className="text-lg text-gray-500 dark:text-gray-400">
+              {searchQuery ? `No results found for "${searchQuery}"` : "No movies available"}
+            </p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
