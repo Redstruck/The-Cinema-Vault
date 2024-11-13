@@ -8,6 +8,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 import { useNavigate } from "react-router-dom";
+import { MovieResult, TvResult, PersonResult } from "moviedb-promise/dist/types";
 
 const moviedb = new MovieDb(import.meta.env.VITE_TMDB_API_KEY);
 
@@ -34,8 +35,14 @@ const Index = () => {
     },
   });
 
+  const getTitle = (item: MovieResult | TvResult | PersonResult) => {
+    if ('title' in item) return item.title;
+    if ('name' in item) return item.name;
+    return 'Unknown Title';
+  };
+
   const filteredMovies = trendingMovies?.filter(movie =>
-    movie.title?.toLowerCase().includes(searchQuery.toLowerCase())
+    getTitle(movie).toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -69,7 +76,7 @@ const Index = () => {
           <div className="text-center">Loading...</div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {filteredMovies?.map((movie: any) => (
+            {filteredMovies?.map((movie: MovieResult | TvResult | PersonResult) => (
               <Card 
                 key={movie.id} 
                 className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
@@ -78,11 +85,11 @@ const Index = () => {
                 <CardContent className="p-0">
                   <img
                     src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
-                    alt={movie.title}
+                    alt={getTitle(movie)}
                     className="w-full h-[300px] object-cover"
                   />
                   <div className="p-4">
-                    <h2 className="font-semibold text-lg mb-2 line-clamp-1">{movie.title}</h2>
+                    <h2 className="font-semibold text-lg mb-2 line-clamp-1">{getTitle(movie)}</h2>
                     <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
                       {movie.overview}
                     </p>
