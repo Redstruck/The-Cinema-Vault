@@ -8,9 +8,17 @@ import { useToast } from "@/components/ui/use-toast";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 import { useNavigate } from "react-router-dom";
-import { MovieResult, TvResult, PersonResult } from "moviedb-promise/dist/types";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const moviedb = new MovieDb(import.meta.env.VITE_TMDB_API_KEY);
+
+type MovieItem = {
+  id: number;
+  title?: string;
+  name?: string;
+  poster_path: string;
+  overview: string;
+};
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -23,7 +31,7 @@ const Index = () => {
     queryFn: async () => {
       try {
         const response = await moviedb.trending({ media_type: "movie", time_window: "week" });
-        return response.results;
+        return response.results as MovieItem[];
       } catch (error) {
         toast({
           title: "Error",
@@ -35,10 +43,8 @@ const Index = () => {
     },
   });
 
-  const getTitle = (item: MovieResult | TvResult | PersonResult) => {
-    if ('title' in item) return item.title;
-    if ('name' in item) return item.name;
-    return 'Unknown Title';
+  const getTitle = (item: MovieItem) => {
+    return item.title || item.name || 'Unknown Title';
   };
 
   const filteredMovies = trendingMovies?.filter(movie =>
@@ -49,7 +55,7 @@ const Index = () => {
     <div className="min-h-screen p-4 md:p-8 font-poppins">
       <div className="max-w-7xl mx-auto">
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold text-center">Movie Explorer</h1>
+          <h1 className="text-4xl font-bold text-center">Trending Movies Explorer</h1>
           <Button
             variant="ghost"
             size="icon"
@@ -73,10 +79,23 @@ const Index = () => {
         </div>
 
         {isLoading ? (
-          <div className="text-center">Loading...</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {[...Array(8)].map((_, i) => (
+              <Card key={i} className="overflow-hidden">
+                <CardContent className="p-0">
+                  <Skeleton className="w-full h-[300px]" />
+                  <div className="p-4">
+                    <Skeleton className="h-6 w-3/4 mb-2" />
+                    <Skeleton className="h-4 w-full mb-2" />
+                    <Skeleton className="h-4 w-2/3" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {filteredMovies?.map((movie: MovieResult | TvResult | PersonResult) => (
+            {filteredMovies?.map((movie: MovieItem) => (
               <Card 
                 key={movie.id} 
                 className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
