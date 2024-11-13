@@ -6,15 +6,16 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { Moon, Sun } from "lucide-react";
-import { useTheme } from "next-themes";
+import { useTheme } from "@/components/theme-provider";
+import { useNavigate } from "react-router-dom";
 
-// Initialize MovieDb
 const moviedb = new MovieDb(import.meta.env.VITE_TMDB_API_KEY);
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
+  const navigate = useNavigate();
 
   const { data: trendingMovies, isLoading } = useQuery({
     queryKey: ["trending"],
@@ -33,6 +34,10 @@ const Index = () => {
     },
   });
 
+  const filteredMovies = trendingMovies?.filter(movie =>
+    movie.title?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <div className="min-h-screen p-4 md:p-8 font-poppins">
       <div className="max-w-7xl mx-auto">
@@ -41,7 +46,7 @@ const Index = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+            onClick={() => setTheme(theme === "light" ? "dark" : "light")}
             className="rounded-full"
           >
             <Sun className="h-6 w-6 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
@@ -58,15 +63,18 @@ const Index = () => {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="flex-1"
           />
-          <Button>Search</Button>
         </div>
 
         {isLoading ? (
           <div className="text-center">Loading...</div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {trendingMovies?.map((movie: any) => (
-              <Card key={movie.id} className="overflow-hidden hover:shadow-lg transition-shadow">
+            {filteredMovies?.map((movie: any) => (
+              <Card 
+                key={movie.id} 
+                className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                onClick={() => navigate(`/movie/${movie.id}`)}
+              >
                 <CardContent className="p-0">
                   <img
                     src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
