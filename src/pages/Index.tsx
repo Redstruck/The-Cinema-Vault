@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -11,7 +10,6 @@ import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import Footer from "@/components/Footer";
 import { tmdbApi } from "@/lib/tmdb";
-
 type MovieItem = {
   id: number;
   title?: string;
@@ -19,16 +17,22 @@ type MovieItem = {
   poster_path: string;
   overview: string;
 };
-
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const { toast } = useToast();
-  const { theme, setTheme } = useTheme();
+  const {
+    toast
+  } = useToast();
+  const {
+    theme,
+    setTheme
+  } = useTheme();
   const navigate = useNavigate();
-
   console.log("Using Supabase TMDB API integration");
-
-  const { data: trendingMovies, isLoading, error } = useQuery({
+  const {
+    data: trendingMovies,
+    isLoading,
+    error
+  } = useQuery({
     queryKey: ["trending"],
     queryFn: async () => {
       console.log("Fetching trending movies via Supabase...");
@@ -37,10 +41,8 @@ const Index = () => {
           media_type: "movie",
           time_window: "week"
         });
-        
         console.log("API Response:", response);
         console.log("Movies count:", response.results?.length);
-        
         return response.results as MovieItem[];
       } catch (error) {
         console.error("API Error:", error);
@@ -53,29 +55,21 @@ const Index = () => {
       }
     }
   });
-
-  console.log("Current state:", { isLoading, error, moviesCount: trendingMovies?.length });
-
+  console.log("Current state:", {
+    isLoading,
+    error,
+    moviesCount: trendingMovies?.length
+  });
   const getTitle = (item: MovieItem) => {
     return item.title || item.name || 'Unknown Title';
   };
-
-  const filteredMovies = trendingMovies?.filter(movie => 
-    getTitle(movie).toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  return (
-    <div className="min-h-screen flex flex-col">
+  const filteredMovies = trendingMovies?.filter(movie => getTitle(movie).toLowerCase().includes(searchQuery.toLowerCase()));
+  return <div className="min-h-screen flex flex-col">
       <div className="flex-1 p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-8">
-            <h1 className="my-0 mx-0 text-4xl font-extrabold text-center">The Cinema Vault</h1>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-              className="rounded-full"
-            >
+            <h1 className="my-0 mx-0 text-4xl font-extrabold text-center">Cinema Vault</h1>
+            <Button variant="ghost" size="icon" onClick={() => setTheme(theme === "light" ? "dark" : "light")} className="rounded-full">
               <Sun className="h-6 w-6 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
               <Moon className="absolute h-6 w-6 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
               <span className="sr-only">Toggle theme</span>
@@ -83,19 +77,11 @@ const Index = () => {
           </div>
           
           <div className="flex gap-4 mb-8">
-            <Input
-              type="text"
-              placeholder="Search movies..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="flex-1"
-            />
+            <Input type="text" placeholder="Search movies..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="flex-1" />
           </div>
 
-          {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {[...Array(8)].map((_, i) => (
-                <Card key={i} className="overflow-hidden">
+          {isLoading ? <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {[...Array(8)].map((_, i) => <Card key={i} className="overflow-hidden">
                   <CardContent className="p-0">
                     <Skeleton className="w-full h-[300px]" />
                     <div className="p-4">
@@ -104,42 +90,25 @@ const Index = () => {
                       <Skeleton className="h-4 w-2/3" />
                     </div>
                   </CardContent>
-                </Card>
-              ))}
-            </div>
-          ) : error ? (
-            <div className="text-center py-8">
+                </Card>)}
+            </div> : error ? <div className="text-center py-8">
               <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-6 max-w-md mx-auto">
                 <h2 className="text-lg font-semibold mb-2 text-destructive">Error Loading Movies</h2>
                 <p className="text-sm text-muted-foreground">
                   {error instanceof Error ? error.message : "Something went wrong while fetching movies."}
                 </p>
               </div>
-            </div>
-          ) : filteredMovies?.length === 0 ? (
-            <div className="text-center py-8">
+            </div> : filteredMovies?.length === 0 ? <div className="text-center py-8">
               <p className="text-lg text-gray-500 dark:text-gray-400">
                 {searchQuery ? `No results found for "${searchQuery}"` : "No movies available"}
               </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {filteredMovies?.map((movie: MovieItem) => (
-                <Card
-                  key={movie.id}
-                  className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
-                  onClick={() => navigate(`/movie/${movie.id}`)}
-                >
+            </div> : <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+              {filteredMovies?.map((movie: MovieItem) => <Card key={movie.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate(`/movie/${movie.id}`)}>
                   <CardContent className="p-0">
-                    <img
-                      src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
-                      alt={getTitle(movie)}
-                      className="w-full h-[300px] object-cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = '/placeholder.svg';
-                      }}
-                    />
+                    <img src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`} alt={getTitle(movie)} className="w-full h-[300px] object-cover" onError={e => {
+                const target = e.target as HTMLImageElement;
+                target.src = '/placeholder.svg';
+              }} />
                     <div className="p-4">
                       <h2 className="font-semibold text-lg mb-2 line-clamp-1">{getTitle(movie)}</h2>
                       <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
@@ -147,15 +116,11 @@ const Index = () => {
                       </p>
                     </div>
                   </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
+                </Card>)}
+            </div>}
         </div>
       </div>
       <Footer />
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
