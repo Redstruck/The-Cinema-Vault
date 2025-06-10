@@ -74,11 +74,11 @@ const Index = () => {
       <div className="flex-1 p-4 md:p-8">
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center mb-8">
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-4">
               <img 
                 src="/image.png" 
                 alt="Cinema Vault Logo" 
-                className="h-12 w-auto object-contain"
+                className="h-20 w-auto object-contain"
               />
               <h1 className="my-0 mx-0 text-4xl font-extrabold">Cinema Vault</h1>
             </div>
