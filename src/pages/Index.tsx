@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { MovieDb } from "moviedb-promise";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,8 +10,7 @@ import { useTheme } from "@/components/theme-provider";
 import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import Footer from "@/components/Footer";
-
-const moviedb = new MovieDb(import.meta.env.VITE_TMDB_API_KEY);
+import { tmdbApi } from "@/lib/tmdb";
 
 type MovieItem = {
   id: number;
@@ -28,18 +26,14 @@ const Index = () => {
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
 
-  console.log("API Key available:", !!import.meta.env.VITE_TMDB_API_KEY);
+  console.log("Using Supabase TMDB API integration");
 
   const { data: trendingMovies, isLoading, error } = useQuery({
     queryKey: ["trending"],
     queryFn: async () => {
-      console.log("Fetching trending movies...");
+      console.log("Fetching trending movies via Supabase...");
       try {
-        if (!import.meta.env.VITE_TMDB_API_KEY) {
-          throw new Error("TMDB API key is not configured. Please set VITE_TMDB_API_KEY in your environment variables.");
-        }
-        
-        const response = await moviedb.trending({
+        const response = await tmdbApi.trending({
           media_type: "movie",
           time_window: "week"
         });
@@ -69,46 +63,6 @@ const Index = () => {
   const filteredMovies = trendingMovies?.filter(movie => 
     getTitle(movie).toLowerCase().includes(searchQuery.toLowerCase())
   );
-
-  // Show API key warning if not configured
-  if (!import.meta.env.VITE_TMDB_API_KEY) {
-    return (
-      <div className="min-h-screen flex flex-col">
-        <div className="flex-1 p-4 md:p-8">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex justify-between items-center mb-8">
-              <h1 className="my-0 mx-0 text-4xl font-extrabold text-center">The Cinema Vault</h1>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setTheme(theme === "light" ? "dark" : "light")}
-                className="rounded-full"
-              >
-                <Sun className="h-6 w-6 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                <Moon className="absolute h-6 w-6 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                <span className="sr-only">Toggle theme</span>
-              </Button>
-            </div>
-            
-            <div className="text-center py-16">
-              <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-6 max-w-md mx-auto">
-                <h2 className="text-xl font-semibold mb-2 text-destructive">Configuration Required</h2>
-                <p className="text-sm text-muted-foreground mb-4">
-                  To use this app, you need to set up a TMDB API key.
-                </p>
-                <div className="text-left text-xs bg-muted p-3 rounded font-mono">
-                  <p className="mb-2">1. Get an API key from <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">TMDB</a></p>
-                  <p className="mb-2">2. Create a .env file in your project root</p>
-                  <p>3. Add: VITE_TMDB_API_KEY=your_api_key_here</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen flex flex-col">

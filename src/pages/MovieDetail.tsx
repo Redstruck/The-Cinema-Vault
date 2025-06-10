@@ -1,13 +1,12 @@
+
 import { useParams, useNavigate } from "react-router-dom";
-import { MovieDb } from "moviedb-promise";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
 import { ArrowLeft } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import Footer from "@/components/Footer";
-
-const moviedb = new MovieDb(import.meta.env.VITE_TMDB_API_KEY);
+import { tmdbApi } from "@/lib/tmdb";
 
 const MovieDetail = () => {
   const { id } = useParams();
@@ -18,7 +17,7 @@ const MovieDetail = () => {
     queryKey: ["movie", id],
     queryFn: async () => {
       try {
-        const response = await moviedb.movieInfo({ id: id as string });
+        const response = await tmdbApi.movieInfo({ id: id as string });
         return response;
       } catch (error) {
         toast({
