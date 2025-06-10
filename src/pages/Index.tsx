@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { MovieDb } from "moviedb-promise";
 import { useQuery } from "@tanstack/react-query";
@@ -27,25 +28,39 @@ const Index = () => {
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
 
-  const { data: trendingMovies, isLoading } = useQuery({
+  console.log("API Key available:", !!import.meta.env.VITE_TMDB_API_KEY);
+
+  const { data: trendingMovies, isLoading, error } = useQuery({
     queryKey: ["trending"],
     queryFn: async () => {
+      console.log("Fetching trending movies...");
       try {
+        if (!import.meta.env.VITE_TMDB_API_KEY) {
+          throw new Error("TMDB API key is not configured. Please set VITE_TMDB_API_KEY in your environment variables.");
+        }
+        
         const response = await moviedb.trending({
           media_type: "movie",
           time_window: "week"
         });
+        
+        console.log("API Response:", response);
+        console.log("Movies count:", response.results?.length);
+        
         return response.results as MovieItem[];
       } catch (error) {
+        console.error("API Error:", error);
         toast({
           title: "Error",
-          description: "Failed to fetch trending movies. Please try again later.",
+          description: error instanceof Error ? error.message : "Failed to fetch trending movies. Please try again later.",
           variant: "destructive"
         });
-        return [];
+        throw error;
       }
     }
   });
+
+  console.log("Current state:", { isLoading, error, moviesCount: trendingMovies?.length });
 
   const getTitle = (item: MovieItem) => {
     return item.title || item.name || 'Unknown Title';
@@ -54,6 +69,46 @@ const Index = () => {
   const filteredMovies = trendingMovies?.filter(movie => 
     getTitle(movie).toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Show API key warning if not configured
+  if (!import.meta.env.VITE_TMDB_API_KEY) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <div className="flex-1 p-4 md:p-8">
+          <div className="max-w-7xl mx-auto">
+            <div className="flex justify-between items-center mb-8">
+              <h1 className="my-0 mx-0 text-4xl font-extrabold text-center">The Cinema Vault</h1>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+                className="rounded-full"
+              >
+                <Sun className="h-6 w-6 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                <Moon className="absolute h-6 w-6 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                <span className="sr-only">Toggle theme</span>
+              </Button>
+            </div>
+            
+            <div className="text-center py-16">
+              <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-6 max-w-md mx-auto">
+                <h2 className="text-xl font-semibold mb-2 text-destructive">Configuration Required</h2>
+                <p className="text-sm text-muted-foreground mb-4">
+                  To use this app, you need to set up a TMDB API key.
+                </p>
+                <div className="text-left text-xs bg-muted p-3 rounded font-mono">
+                  <p className="mb-2">1. Get an API key from <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">TMDB</a></p>
+                  <p className="mb-2">2. Create a .env file in your project root</p>
+                  <p>3. Add: VITE_TMDB_API_KEY=your_api_key_here</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -98,6 +153,15 @@ const Index = () => {
                 </Card>
               ))}
             </div>
+          ) : error ? (
+            <div className="text-center py-8">
+              <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-6 max-w-md mx-auto">
+                <h2 className="text-lg font-semibold mb-2 text-destructive">Error Loading Movies</h2>
+                <p className="text-sm text-muted-foreground">
+                  {error instanceof Error ? error.message : "Something went wrong while fetching movies."}
+                </p>
+              </div>
+            </div>
           ) : filteredMovies?.length === 0 ? (
             <div className="text-center py-8">
               <p className="text-lg text-gray-500 dark:text-gray-400">
@@ -117,6 +181,10 @@ const Index = () => {
                       src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
                       alt={getTitle(movie)}
                       className="w-full h-[300px] object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = '/placeholder.svg';
+                      }}
                     />
                     <div className="p-4">
                       <h2 className="font-semibold text-lg mb-2 line-clamp-1">{getTitle(movie)}</h2>
