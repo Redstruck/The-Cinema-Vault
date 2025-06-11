@@ -18,33 +18,34 @@ const MovieDetail = () => {
   console.log("ID type:", typeof id);
   console.log("========================");
 
-  const { data: movie, isLoading, error } = useQuery({
-    queryKey: ["movie", id],
+  const { data: media, isLoading, error } = useQuery({
+    queryKey: ["media", id],
     queryFn: async () => {
       console.log("=== API CALL DEBUG ===");
-      console.log("Fetching movie details for ID:", id);
+      console.log("Fetching media details for ID:", id);
       console.log("ID being sent to API:", id);
       
       try {
-        const response = await tmdbApi.movieInfo({ id: id as string });
+        const response = await tmdbApi.mediaInfo({ id: id as string });
         
         console.log("=== API RESPONSE DEBUG ===");
         console.log("Full API response:", response);
-        console.log("Movie ID in response:", response?.id);
-        console.log("Movie title in response:", response?.title);
+        console.log("Media ID in response:", response?.id);
+        console.log("Media title in response:", response?.title);
+        console.log("Media type:", response?.media_type);
         console.log("Response poster path:", response?.poster_path);
         console.log("========================");
         
         return response;
       } catch (error) {
         console.error("=== API ERROR DEBUG ===");
-        console.error("Error fetching movie details:", error);
-        console.error("Error for movie ID:", id);
+        console.error("Error fetching media details:", error);
+        console.error("Error for media ID:", id);
         console.error("========================");
         
         toast({
           title: "Error",
-          description: "Failed to fetch movie details. Please try again later.",
+          description: "Failed to fetch content details. Please try again later.",
           variant: "destructive",
         });
         return null;
@@ -54,11 +55,55 @@ const MovieDetail = () => {
   });
 
   console.log("=== RENDER DEBUG ===");
-  console.log("Current movie data:", movie);
+  console.log("Current media data:", media);
   console.log("Is loading:", isLoading);
   console.log("Error:", error);
-  console.log("URL ID vs Movie ID:", { urlId: id, movieId: movie?.id });
+  console.log("URL ID vs Media ID:", { urlId: id, mediaId: media?.id });
   console.log("==================");
+
+  const getContentType = () => {
+    return media?.media_type === 'tv' ? 'TV Series' : 'Movie';
+  };
+
+  const getRuntime = () => {
+    if (media?.media_type === 'tv') {
+      if (media?.episode_run_time && media.episode_run_time.length > 0) {
+        return `${media.episode_run_time[0]} min per episode`;
+      }
+      return 'Runtime varies';
+    }
+    return media?.runtime ? `${media.runtime} minutes` : 'Runtime unknown';
+  };
+
+  const getAdditionalInfo = () => {
+    if (media?.media_type === 'tv') {
+      return (
+        <>
+          {media?.number_of_seasons && (
+            <div>
+              <span className="font-semibold">Seasons:</span> {media.number_of_seasons}
+            </div>
+          )}
+          {media?.number_of_episodes && (
+            <div>
+              <span className="font-semibold">Episodes:</span> {media.number_of_episodes}
+            </div>
+          )}
+          {media?.first_air_date && (
+            <div>
+              <span className="font-semibold">First Air Date:</span> {media.first_air_date}
+            </div>
+          )}
+          {media?.last_air_date && (
+            <div>
+              <span className="font-semibold">Last Air Date:</span> {media.last_air_date}
+            </div>
+          )}
+        </>
+      );
+    }
+    return null;
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -84,12 +129,12 @@ const MovieDetail = () => {
                 <Skeleton className="h-6 w-1/2" />
               </div>
             </div>
-          ) : !movie ? (
+          ) : !media ? (
             <div className="text-center mt-8">
               <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-6 max-w-md mx-auto">
-                <h2 className="text-lg font-semibold mb-2 text-destructive">Movie Not Found</h2>
+                <h2 className="text-lg font-semibold mb-2 text-destructive">Content Not Found</h2>
                 <p className="text-sm text-muted-foreground">
-                  Could not find movie with ID: {id}
+                  Could not find content with ID: {id}
                 </p>
               </div>
             </div>
@@ -97,8 +142,8 @@ const MovieDetail = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               <div>
                 <img
-                  src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`}
-                  alt={movie.title}
+                  src={`https://image.tmdb.org/t/p/w500${media.poster_path}`}
+                  alt={media.title}
                   className="w-full rounded-lg shadow-lg"
                   onError={(e) => {
                     const target = e.target as HTMLImageElement;
@@ -107,28 +152,34 @@ const MovieDetail = () => {
                 />
               </div>
               <div>
-                <h1 className="text-4xl font-bold mb-4">{movie.title}</h1>
-                <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded mb-4 text-sm">
-                  <strong>Debug Info:</strong> URL ID: {id}, Movie ID: {movie.id}
+                <div className="flex items-center gap-2 mb-2">
+                  <h1 className="text-4xl font-bold">{media.title}</h1>
+                  <span className="bg-primary/10 text-primary px-2 py-1 rounded text-sm font-medium">
+                    {getContentType()}
+                  </span>
                 </div>
-                <p className="text-lg mb-4">{movie.overview}</p>
+                <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded mb-4 text-sm">
+                  <strong>Debug Info:</strong> URL ID: {id}, Media ID: {media.id}, Type: {media.media_type}
+                </div>
+                <p className="text-lg mb-4">{media.overview}</p>
                 <div className="space-y-4">
                   <div>
-                    <span className="font-semibold">Release Date:</span> {movie.release_date}
+                    <span className="font-semibold">Release Date:</span> {media.release_date}
                   </div>
                   <div>
-                    <span className="font-semibold">Rating:</span> {movie.vote_average?.toFixed(1)}/10
+                    <span className="font-semibold">Rating:</span> {media.vote_average?.toFixed(1)}/10
                   </div>
                   <div>
-                    <span className="font-semibold">Runtime:</span> {movie.runtime} minutes
+                    <span className="font-semibold">Runtime:</span> {getRuntime()}
                   </div>
                   <div>
                     <span className="font-semibold">Genres:</span>{" "}
-                    {movie.genres?.map(genre => genre.name).join(", ")}
+                    {media.genres?.map(genre => genre.name).join(", ")}
                   </div>
-                  {movie.tagline && (
+                  {getAdditionalInfo()}
+                  {media.tagline && (
                     <div>
-                      <span className="font-semibold">Tagline:</span> {movie.tagline}
+                      <span className="font-semibold">Tagline:</span> {media.tagline}
                     </div>
                   )}
                 </div>

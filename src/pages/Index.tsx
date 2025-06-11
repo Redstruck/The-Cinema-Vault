@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -18,6 +17,7 @@ type MovieItem = {
   name?: string;
   poster_path: string;
   overview: string;
+  media_type?: string;
 };
 
 const Index = () => {
@@ -48,7 +48,7 @@ const Index = () => {
         if (response.results) {
           console.log("Movie data mapping:");
           response.results.forEach((movie: MovieItem, index: number) => {
-            console.log(`Index ${index}: ID=${movie.id}, Title="${movie.title || movie.name}"`);
+            console.log(`Index ${index}: ID=${movie.id}, Title="${movie.title || movie.name}", Type=${movie.media_type}`);
           });
         }
         
@@ -89,6 +89,10 @@ const Index = () => {
   const filteredMovies = trendingMovies?.filter(movie => 
     getTitle(movie).toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const getMediaType = (item: MovieItem) => {
+    return item.media_type === 'tv' ? 'TV' : 'Movie';
+  };
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -174,7 +178,12 @@ const Index = () => {
                       }} 
                     />
                     <div className="p-4">
-                      <h2 className="font-semibold text-lg mb-2 line-clamp-1">{getTitle(movie)}</h2>
+                      <div className="flex items-center justify-between mb-2">
+                        <h2 className="font-semibold text-lg line-clamp-1 flex-1">{getTitle(movie)}</h2>
+                        <span className="bg-primary/10 text-primary px-2 py-1 rounded text-xs font-medium ml-2">
+                          {getMediaType(movie)}
+                        </span>
+                      </div>
                       <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
                         {movie.overview}
                       </p>

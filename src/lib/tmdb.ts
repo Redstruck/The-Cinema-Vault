@@ -45,5 +45,57 @@ export const tmdbApi = {
 
     if (error) throw error;
     return data;
+  },
+
+  async tvInfo(params: { id: string }) {
+    console.log("=== TMDB API TV INFO CALL ===");
+    console.log("TV info params:", params);
+    console.log("TV ID being requested:", params.id);
+    console.log("TV ID type:", typeof params.id);
+    
+    const { data, error } = await supabase.functions.invoke('tmdb-api', {
+      body: {
+        endpoint: `/tv/${params.id}`,
+        params: {}
+      }
+    });
+
+    console.log("TV info API response:", data);
+    console.log("TV info API error:", error);
+    console.log("Response TV ID:", data?.id);
+    console.log("Response TV name:", data?.name);
+    console.log("==============================");
+
+    if (error) throw error;
+    return data;
+  },
+
+  async mediaInfo(params: { id: string; media_type?: string }) {
+    console.log("=== TMDB API MEDIA INFO CALL ===");
+    console.log("Media info params:", params);
+    
+    // First try as movie
+    try {
+      const movieData = await this.movieInfo({ id: params.id });
+      console.log("Successfully fetched as movie:", movieData.title);
+      return { ...movieData, media_type: 'movie' };
+    } catch (movieError) {
+      console.log("Failed to fetch as movie, trying TV series...");
+      
+      // If movie fails, try as TV series
+      try {
+        const tvData = await this.tvInfo({ id: params.id });
+        console.log("Successfully fetched as TV series:", tvData.name);
+        return { 
+          ...tvData, 
+          media_type: 'tv',
+          title: tvData.name, // Normalize name to title for consistency
+          release_date: tvData.first_air_date // Normalize first_air_date to release_date
+        };
+      } catch (tvError) {
+        console.error("Failed to fetch as both movie and TV series");
+        throw new Error(`Content with ID ${params.id} not found`);
+      }
+    }
   }
 };
