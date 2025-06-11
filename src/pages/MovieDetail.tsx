@@ -168,9 +168,6 @@ const MovieDetail = () => {
                     {getContentType()}
                   </span>
                 </div>
-                <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded mb-4 text-sm">
-                  <strong>Debug Info:</strong> URL ID: {id}, Media ID: {media.id}, Type: {media.media_type}, Input Type: {mediaType}
-                </div>
                 <p className="text-lg mb-4">{media.overview}</p>
                 <div className="space-y-4">
                   <div>
