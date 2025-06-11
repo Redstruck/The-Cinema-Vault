@@ -191,7 +191,6 @@ const Index = () => {
                       <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
                         {movie.overview}
                       </p>
-                      <p className="text-xs text-gray-400 mt-2">ID: {movie.id} | Type: {movie.media_type}</p>
                     </div>
                   </CardContent>
                 </Card>
