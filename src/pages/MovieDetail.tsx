@@ -1,5 +1,4 @@
-
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/components/ui/use-toast";
@@ -11,22 +10,31 @@ import { tmdbApi } from "@/lib/tmdb";
 const MovieDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+
+  // Try to get media_type from navigation state
+  const mediaType = location.state?.media_type;
 
   console.log("=== MOVIE DETAIL DEBUG ===");
   console.log("URL Parameter ID:", id);
   console.log("ID type:", typeof id);
+  console.log("Media type from navigation state:", mediaType);
   console.log("========================");
 
   const { data: media, isLoading, error } = useQuery({
-    queryKey: ["media", id],
+    queryKey: ["media", id, mediaType],
     queryFn: async () => {
       console.log("=== API CALL DEBUG ===");
       console.log("Fetching media details for ID:", id);
       console.log("ID being sent to API:", id);
+      console.log("Media type being sent to API:", mediaType);
       
       try {
-        const response = await tmdbApi.mediaInfo({ id: id as string });
+        const response = await tmdbApi.mediaInfo({ 
+          id: id as string, 
+          media_type: mediaType 
+        });
         
         console.log("=== API RESPONSE DEBUG ===");
         console.log("Full API response:", response);
@@ -41,6 +49,7 @@ const MovieDetail = () => {
         console.error("=== API ERROR DEBUG ===");
         console.error("Error fetching media details:", error);
         console.error("Error for media ID:", id);
+        console.error("Error for media type:", mediaType);
         console.error("========================");
         
         toast({
@@ -159,7 +168,7 @@ const MovieDetail = () => {
                   </span>
                 </div>
                 <div className="bg-gray-100 dark:bg-gray-800 p-3 rounded mb-4 text-sm">
-                  <strong>Debug Info:</strong> URL ID: {id}, Media ID: {media.id}, Type: {media.media_type}
+                  <strong>Debug Info:</strong> URL ID: {id}, Media ID: {media.id}, Type: {media.media_type}, Input Type: {mediaType}
                 </div>
                 <p className="text-lg mb-4">{media.overview}</p>
                 <div className="space-y-4">

@@ -73,8 +73,38 @@ export const tmdbApi = {
   async mediaInfo(params: { id: string; media_type?: string }) {
     console.log("=== TMDB API MEDIA INFO CALL ===");
     console.log("Media info params:", params);
+    console.log("Media type provided:", params.media_type);
     
-    // First try as movie
+    // If we know the media type, use it directly
+    if (params.media_type === 'tv') {
+      console.log("Fetching as TV series directly");
+      try {
+        const tvData = await this.tvInfo({ id: params.id });
+        console.log("Successfully fetched TV series:", tvData.name);
+        return { 
+          ...tvData, 
+          media_type: 'tv',
+          title: tvData.name, // Normalize name to title for consistency
+          release_date: tvData.first_air_date // Normalize first_air_date to release_date
+        };
+      } catch (tvError) {
+        console.error("Failed to fetch TV series:", tvError);
+        throw new Error(`TV series with ID ${params.id} not found`);
+      }
+    } else if (params.media_type === 'movie') {
+      console.log("Fetching as movie directly");
+      try {
+        const movieData = await this.movieInfo({ id: params.id });
+        console.log("Successfully fetched movie:", movieData.title);
+        return { ...movieData, media_type: 'movie' };
+      } catch (movieError) {
+        console.error("Failed to fetch movie:", movieError);
+        throw new Error(`Movie with ID ${params.id} not found`);
+      }
+    }
+    
+    // Fallback: try movie first, then TV (only when media_type is unknown)
+    console.log("Media type unknown, trying movie first...");
     try {
       const movieData = await this.movieInfo({ id: params.id });
       console.log("Successfully fetched as movie:", movieData.title);
@@ -82,7 +112,6 @@ export const tmdbApi = {
     } catch (movieError) {
       console.log("Failed to fetch as movie, trying TV series...");
       
-      // If movie fails, try as TV series
       try {
         const tvData = await this.tvInfo({ id: params.id });
         console.log("Successfully fetched as TV series:", tvData.name);

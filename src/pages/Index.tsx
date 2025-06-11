@@ -80,10 +80,14 @@ const Index = () => {
     console.log("Clicked movie object:", movie);
     console.log("Movie ID being passed:", movie.id);
     console.log("Movie title:", getTitle(movie));
+    console.log("Movie media type:", movie.media_type);
     console.log("Navigation path:", `/movie/${movie.id}`);
     console.log("========================");
     
-    navigate(`/movie/${movie.id}`);
+    // Pass media_type in navigation state
+    navigate(`/movie/${movie.id}`, { 
+      state: { media_type: movie.media_type } 
+    });
   };
 
   const filteredMovies = trendingMovies?.filter(movie => 
@@ -187,7 +191,7 @@ const Index = () => {
                       <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
                         {movie.overview}
                       </p>
-                      <p className="text-xs text-gray-400 mt-2">ID: {movie.id}</p>
+                      <p className="text-xs text-gray-400 mt-2">ID: {movie.id} | Type: {movie.media_type}</p>
                     </div>
                   </CardContent>
                 </Card>
