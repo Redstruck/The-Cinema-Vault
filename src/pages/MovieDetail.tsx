@@ -5,6 +5,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { ArrowLeft } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import Footer from "@/components/Footer";
+import StreamingProviders from "@/components/StreamingProviders";
 import { tmdbApi } from "@/lib/tmdb";
 
 const MovieDetail = () => {
@@ -191,6 +192,12 @@ const MovieDetail = () => {
                       <span className="font-semibold">Tagline:</span> {media.tagline}
                     </div>
                   )}
+                  <div className="border-t pt-4">
+                    <StreamingProviders 
+                      movieId={id as string} 
+                      mediaType={media.media_type || 'movie'} 
+                    />
+                  </div>
                 </div>
               </div>
             </div>

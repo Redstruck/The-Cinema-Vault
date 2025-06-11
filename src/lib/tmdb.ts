@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 
 export const tmdbApi = {
@@ -65,6 +64,29 @@ export const tmdbApi = {
     console.log("Response TV ID:", data?.id);
     console.log("Response TV name:", data?.name);
     console.log("==============================");
+
+    if (error) throw error;
+    return data;
+  },
+
+  async watchProviders(params: { id: string; media_type: string }) {
+    console.log("=== TMDB API WATCH PROVIDERS CALL ===");
+    console.log("Watch providers params:", params);
+    
+    const endpoint = params.media_type === 'tv' 
+      ? `/tv/${params.id}/watch/providers`
+      : `/movie/${params.id}/watch/providers`;
+    
+    const { data, error } = await supabase.functions.invoke('tmdb-api', {
+      body: {
+        endpoint,
+        params: {}
+      }
+    });
+
+    console.log("Watch providers API response:", data);
+    console.log("Watch providers API error:", error);
+    console.log("===============================");
 
     if (error) throw error;
     return data;
