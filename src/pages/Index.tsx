@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
@@ -42,6 +43,15 @@ const Index = () => {
         });
         console.log("API Response:", response);
         console.log("Movies count:", response.results?.length);
+        
+        // Debug: Log movie IDs and titles
+        if (response.results) {
+          console.log("Movie data mapping:");
+          response.results.forEach((movie: MovieItem, index: number) => {
+            console.log(`Index ${index}: ID=${movie.id}, Title="${movie.title || movie.name}"`);
+          });
+        }
+        
         return response.results as MovieItem[];
       } catch (error) {
         console.error("API Error:", error);
@@ -63,6 +73,17 @@ const Index = () => {
 
   const getTitle = (item: MovieItem) => {
     return item.title || item.name || 'Unknown Title';
+  };
+
+  const handleMovieClick = (movie: MovieItem) => {
+    console.log("=== MOVIE CLICK DEBUG ===");
+    console.log("Clicked movie object:", movie);
+    console.log("Movie ID being passed:", movie.id);
+    console.log("Movie title:", getTitle(movie));
+    console.log("Navigation path:", `/movie/${movie.id}`);
+    console.log("========================");
+    
+    navigate(`/movie/${movie.id}`);
   };
 
   const filteredMovies = trendingMovies?.filter(movie => 
@@ -140,7 +161,7 @@ const Index = () => {
                 <Card 
                   key={movie.id} 
                   className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" 
-                  onClick={() => navigate(`/movie/${movie.id}`)}
+                  onClick={() => handleMovieClick(movie)}
                 >
                   <CardContent className="p-0">
                     <img 
@@ -157,6 +178,7 @@ const Index = () => {
                       <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
                         {movie.overview}
                       </p>
+                      <p className="text-xs text-gray-400 mt-2">ID: {movie.id}</p>
                     </div>
                   </CardContent>
                 </Card>
