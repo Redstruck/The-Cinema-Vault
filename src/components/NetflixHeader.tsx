@@ -1,4 +1,5 @@
 
+import React from "react";
 import { Search, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "@/components/theme-provider";
