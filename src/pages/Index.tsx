@@ -99,9 +99,9 @@ const Index = () => {
           <div className="flex items-center gap-8">
             <h1 className="text-2xl font-bold text-violet-600">CINEMA VAULT</h1>
             <nav className="hidden md:flex items-center gap-6 text-sm">
-              <span className="text-white font-medium">Home</span>
-              <span className="text-gray-300 hover:text-white cursor-pointer">TV Shows</span>
-              <span className="text-gray-300 hover:text-white cursor-pointer">Movies</span>
+              <span className="text-white font-medium">Adults</span>
+              <span className="text-gray-300 hover:text-white cursor-pointer">Kids</span>
+              <span className="text-gray-300 hover:text-white cursor-pointer">List</span>
               <span className="text-gray-300 hover:text-white cursor-pointer">Kids</span>
               <span className="text-gray-300 hover:text-white cursor-pointer">
             </span>
