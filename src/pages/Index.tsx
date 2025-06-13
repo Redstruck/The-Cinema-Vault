@@ -102,8 +102,9 @@ const Index = () => {
               <span className="text-white font-medium">Home</span>
               <span className="text-gray-300 hover:text-white cursor-pointer">TV Shows</span>
               <span className="text-gray-300 hover:text-white cursor-pointer">Movies</span>
-              <span className="text-gray-300 hover:text-white cursor-pointer">New & Popular</span>
-              <span className="text-gray-300 hover:text-white cursor-pointer">My List</span>
+              <span className="text-gray-300 hover:text-white cursor-pointer">Kids</span>
+              <span className="text-gray-300 hover:text-white cursor-pointer">
+            </span>
             </nav>
           </div>
           
