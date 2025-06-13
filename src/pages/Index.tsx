@@ -4,10 +4,9 @@ import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/components/ui/use-toast";
-import { Moon, Sun } from "lucide-react";
+import { Moon, Sun, Search } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 import { Skeleton } from "@/components/ui/skeleton";
-import Footer from "@/components/Footer";
 import { tmdbApi } from "@/lib/tmdb";
 import VerticalMediaMenu from "@/components/VerticalMediaMenu";
 
@@ -18,10 +17,14 @@ type MovieItem = {
   poster_path: string;
   overview: string;
   media_type?: string;
+  release_date?: string;
+  first_air_date?: string;
+  vote_average?: number;
 };
 
 const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
+  const [showSearch, setShowSearch] = useState(false);
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
 
@@ -77,79 +80,95 @@ const Index = () => {
     getTitle(movie).toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="space-y-4 text-center">
+          <Skeleton className="h-12 w-48 mx-auto bg-gray-800" />
+          <Skeleton className="h-6 w-32 mx-auto bg-gray-800" />
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center py-8">
+          <div className="bg-red-900/20 border border-red-500/20 rounded-lg p-6 max-w-md mx-auto">
+            <h2 className="text-lg font-semibold mb-2 text-red-400">Error Loading Content</h2>
+            <p className="text-sm text-gray-300">
+              {error instanceof Error ? error.message : "Something went wrong while fetching movies."}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen flex flex-col">
-      <div className="flex-1">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center p-4 md:p-8 pb-4">
-            <div className="flex items-center gap-4">
-              <img 
-                src="/image.png" 
-                alt="Cinema Vault Logo" 
-                className="h-20 w-auto object-contain"
+    <div className="min-h-screen bg-black text-white relative">
+      {/* Top Navigation */}
+      <div className="absolute top-0 left-0 right-0 z-50 bg-gradient-to-b from-black/80 to-transparent">
+        <div className="flex justify-between items-center p-6">
+          <div className="flex items-center gap-8">
+            <h1 className="text-2xl font-bold text-red-600">NETFLIX</h1>
+            <nav className="hidden md:flex items-center gap-6 text-sm">
+              <span className="text-white font-medium">Home</span>
+              <span className="text-gray-300 hover:text-white cursor-pointer">TV Shows</span>
+              <span className="text-gray-300 hover:text-white cursor-pointer">Movies</span>
+              <span className="text-gray-300 hover:text-white cursor-pointer">New & Popular</span>
+              <span className="text-gray-300 hover:text-white cursor-pointer">My List</span>
+            </nav>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            {showSearch && (
+              <Input
+                type="text"
+                placeholder="Search titles..."
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                className="w-64 bg-black/50 border-gray-600 text-white placeholder-gray-400"
+                autoFocus
               />
-              <h1 className="my-0 mx-0 text-4xl font-extrabold">Cinema Vault</h1>
-            </div>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              onClick={() => setTheme(theme === "light" ? "dark" : "light")} 
-              className="rounded-full"
+            )}
+            
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setShowSearch(!showSearch)}
+              className="text-white hover:bg-white/10"
             >
-              <Sun className="h-6 w-6 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-6 w-6 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+              <Search className="h-5 w-5" />
+            </Button>
+            
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setTheme(theme === "light" ? "dark" : "light")}
+              className="text-white hover:bg-white/10"
+            >
+              <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
               <span className="sr-only">Toggle theme</span>
             </Button>
           </div>
-          
-          <div className="px-4 md:px-8 pb-4">
-            <Input 
-              type="text" 
-              placeholder="Search movies and TV series..." 
-              value={searchQuery} 
-              onChange={e => setSearchQuery(e.target.value)} 
-              className="w-full max-w-md" 
-            />
-          </div>
-
-          {isLoading ? (
-            <div className="p-4 md:p-8 pt-0 space-y-4">
-              {[...Array(6)].map((_, i) => (
-                <div key={i} className="flex items-center space-x-4">
-                  <Skeleton className="w-16 h-24 rounded" />
-                  <div className="flex-1 space-y-2">
-                    <Skeleton className="h-6 w-3/4" />
-                    <Skeleton className="h-4 w-full" />
-                    <Skeleton className="h-4 w-2/3" />
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : error ? (
-            <div className="p-4 md:p-8 pt-0">
-              <div className="text-center py-8">
-                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-6 max-w-md mx-auto">
-                  <h2 className="text-lg font-semibold mb-2 text-destructive">Error Loading Movies</h2>
-                  <p className="text-sm text-muted-foreground">
-                    {error instanceof Error ? error.message : "Something went wrong while fetching movies."}
-                  </p>
-                </div>
-              </div>
-            </div>
-          ) : filteredMovies?.length === 0 ? (
-            <div className="p-4 md:p-8 pt-0">
-              <div className="text-center py-8">
-                <p className="text-lg text-gray-500 dark:text-gray-400">
-                  {searchQuery ? `No results found for "${searchQuery}"` : "No movies available"}
-                </p>
-              </div>
-            </div>
-          ) : (
-            <VerticalMediaMenu items={filteredMovies || []} />
-          )}
         </div>
       </div>
-      <Footer />
+
+      {/* Main Content */}
+      {filteredMovies?.length === 0 ? (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center py-8">
+            <p className="text-lg text-gray-400">
+              {searchQuery ? `No results found for "${searchQuery}"` : "No movies available"}
+            </p>
+          </div>
+        </div>
+      ) : (
+        <VerticalMediaMenu items={filteredMovies || []} />
+      )}
     </div>
   );
 };
