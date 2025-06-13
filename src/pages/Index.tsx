@@ -1,15 +1,15 @@
+
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
 import { Moon, Sun } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
-import { useNavigate } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import Footer from "@/components/Footer";
 import { tmdbApi } from "@/lib/tmdb";
+import VerticalMediaMenu from "@/components/VerticalMediaMenu";
 
 type MovieItem = {
   id: number;
@@ -24,7 +24,6 @@ const Index = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const { toast } = useToast();
   const { theme, setTheme } = useTheme();
-  const navigate = useNavigate();
 
   console.log("Using Supabase TMDB API integration");
 
@@ -44,7 +43,6 @@ const Index = () => {
         console.log("API Response:", response);
         console.log("Movies count:", response.results?.length);
         
-        // Debug: Log movie IDs and titles
         if (response.results) {
           console.log("Movie data mapping:");
           response.results.forEach((movie: MovieItem, index: number) => {
@@ -75,34 +73,15 @@ const Index = () => {
     return item.title || item.name || 'Unknown Title';
   };
 
-  const handleMovieClick = (movie: MovieItem) => {
-    console.log("=== MOVIE CLICK DEBUG ===");
-    console.log("Clicked movie object:", movie);
-    console.log("Movie ID being passed:", movie.id);
-    console.log("Movie title:", getTitle(movie));
-    console.log("Movie media type:", movie.media_type);
-    console.log("Navigation path:", `/movie/${movie.id}`);
-    console.log("========================");
-    
-    // Pass media_type in navigation state
-    navigate(`/movie/${movie.id}`, { 
-      state: { media_type: movie.media_type } 
-    });
-  };
-
   const filteredMovies = trendingMovies?.filter(movie => 
     getTitle(movie).toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const getMediaType = (item: MovieItem) => {
-    return item.media_type === 'tv' ? 'TV' : 'Movie';
-  };
-
   return (
     <div className="min-h-screen flex flex-col">
-      <div className="flex-1 p-4 md:p-8">
+      <div className="flex-1">
         <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
+          <div className="flex justify-between items-center p-4 md:p-8 pb-4">
             <div className="flex items-center gap-4">
               <img 
                 src="/image.png" 
@@ -123,79 +102,50 @@ const Index = () => {
             </Button>
           </div>
           
-          <div className="flex gap-4 mb-8">
+          <div className="px-4 md:px-8 pb-4">
             <Input 
               type="text" 
-              placeholder="Search movies..." 
+              placeholder="Search movies and TV series..." 
               value={searchQuery} 
               onChange={e => setSearchQuery(e.target.value)} 
-              className="flex-1" 
+              className="w-full max-w-md" 
             />
           </div>
 
           {isLoading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {[...Array(8)].map((_, i) => (
-                <Card key={i} className="overflow-hidden">
-                  <CardContent className="p-0">
-                    <Skeleton className="w-full h-[300px]" />
-                    <div className="p-4">
-                      <Skeleton className="h-6 w-3/4 mb-2" />
-                      <Skeleton className="h-4 w-full mb-2" />
-                      <Skeleton className="h-4 w-2/3" />
-                    </div>
-                  </CardContent>
-                </Card>
+            <div className="p-4 md:p-8 pt-0 space-y-4">
+              {[...Array(6)].map((_, i) => (
+                <div key={i} className="flex items-center space-x-4">
+                  <Skeleton className="w-16 h-24 rounded" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-6 w-3/4" />
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-2/3" />
+                  </div>
+                </div>
               ))}
             </div>
           ) : error ? (
-            <div className="text-center py-8">
-              <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-6 max-w-md mx-auto">
-                <h2 className="text-lg font-semibold mb-2 text-destructive">Error Loading Movies</h2>
-                <p className="text-sm text-muted-foreground">
-                  {error instanceof Error ? error.message : "Something went wrong while fetching movies."}
-                </p>
+            <div className="p-4 md:p-8 pt-0">
+              <div className="text-center py-8">
+                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-6 max-w-md mx-auto">
+                  <h2 className="text-lg font-semibold mb-2 text-destructive">Error Loading Movies</h2>
+                  <p className="text-sm text-muted-foreground">
+                    {error instanceof Error ? error.message : "Something went wrong while fetching movies."}
+                  </p>
+                </div>
               </div>
             </div>
           ) : filteredMovies?.length === 0 ? (
-            <div className="text-center py-8">
-              <p className="text-lg text-gray-500 dark:text-gray-400">
-                {searchQuery ? `No results found for "${searchQuery}"` : "No movies available"}
-              </p>
+            <div className="p-4 md:p-8 pt-0">
+              <div className="text-center py-8">
+                <p className="text-lg text-gray-500 dark:text-gray-400">
+                  {searchQuery ? `No results found for "${searchQuery}"` : "No movies available"}
+                </p>
+              </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {filteredMovies?.map((movie: MovieItem) => (
-                <Card 
-                  key={movie.id} 
-                  className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" 
-                  onClick={() => handleMovieClick(movie)}
-                >
-                  <CardContent className="p-0">
-                    <img 
-                      src={`https://image.tmdb.org/t/p/w500${movie.poster_path}`} 
-                      alt={getTitle(movie)} 
-                      className="w-full h-[300px] object-cover" 
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = '/placeholder.svg';
-                      }} 
-                    />
-                    <div className="p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <h2 className="font-semibold text-lg line-clamp-1 flex-1">{getTitle(movie)}</h2>
-                        <span className="bg-primary/10 text-primary px-2 py-1 rounded text-xs font-medium ml-2">
-                          {getMediaType(movie)}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">
-                        {movie.overview}
-                      </p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+            <VerticalMediaMenu items={filteredMovies || []} />
           )}
         </div>
       </div>
