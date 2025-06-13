@@ -203,7 +203,7 @@ const HorizontalMovieCarousel = ({ items, onItemSelect }: HorizontalMovieCarouse
             <span className="text-gray-300">HD</span>
           </div>
           
-          <p className="text-lg leading-relaxed text-gray-200 max-w-3xl mx-auto">
+          <p className="text-lg leading-loose text-gray-200 max-w-3xl mx-auto">
             {selectedItem.overview || 'No description available for this title.'}
           </p>
         </div>
