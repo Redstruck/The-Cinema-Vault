@@ -26,6 +26,20 @@ const HorizontalMovieCarousel = ({ items, onItemSelect }: HorizontalMovieCarouse
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
   const navigate = useNavigate();
 
+  const getTitle = (item: MediaItem) => {
+    return item.title || item.name || 'Unknown Title';
+  };
+
+  const getReleaseYear = (item: MediaItem) => {
+    const date = item.release_date || item.first_air_date;
+    return date ? new Date(date).getFullYear() : '';
+  };
+
+  const getContentType = (item: MediaItem) => {
+    if (item.media_type === 'tv') return 'TV Series';
+    return 'Movie';
+  };
+
   const handleItemClick = (item: MediaItem, index: number) => {
     setFocusedIndex(index);
     
@@ -110,63 +124,100 @@ const HorizontalMovieCarousel = ({ items, onItemSelect }: HorizontalMovieCarouse
     );
   }
 
+  const selectedItem = items[focusedIndex];
+
   return (
-    <div className="h-screen bg-black text-white flex items-center justify-center overflow-hidden">
-      <div 
-        ref={carouselRef}
-        className="flex items-center gap-8 px-96 overflow-x-auto scrollbar-hide"
-        style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-        tabIndex={0}
-        role="listbox"
-        aria-label="Movies and TV Series Carousel"
-        aria-activedescendant={`carousel-item-${focusedIndex}`}
-      >
-        {items.map((item, index) => {
-          const isFocused = index === focusedIndex;
-          
-          return (
-            <div
-              key={item.id}
-              ref={el => itemRefs.current[index] = el}
-              id={`carousel-item-${index}`}
-              role="option"
-              aria-selected={isFocused}
-              className={cn(
-                "relative cursor-pointer transition-all duration-500 ease-out flex-shrink-0",
-                "hover:scale-110",
-                isFocused 
-                  ? "scale-110 z-10" 
-                  : "scale-90 opacity-60"
-              )}
-              onClick={() => handleItemClick(item, index)}
-              onMouseEnter={() => setFocusedIndex(index)}
-            >
-              <div className="relative w-72 h-96">
-                <img
-                  src={`https://image.tmdb.org/t/p/w500${item.poster_path}`}
-                  alt={item.title || item.name || 'Movie poster'}
-                  className={cn(
-                    "w-full h-full object-cover rounded-lg transition-all duration-500",
-                    isFocused && "ring-4 ring-white shadow-2xl shadow-white/20"
-                  )}
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = '/placeholder.svg';
-                  }}
-                />
-                
-                {isFocused && (
-                  <div className="absolute inset-0 rounded-lg bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+    <div className="h-screen bg-black text-white flex flex-col overflow-hidden">
+      {/* Carousel Container */}
+      <div className="flex-1 flex items-center justify-center">
+        <div 
+          ref={carouselRef}
+          className="flex items-center gap-12 px-96 overflow-x-auto scrollbar-hide"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          tabIndex={0}
+          role="listbox"
+          aria-label="Movies and TV Series Carousel"
+          aria-activedescendant={`carousel-item-${focusedIndex}`}
+        >
+          {items.map((item, index) => {
+            const isFocused = index === focusedIndex;
+            
+            return (
+              <div
+                key={item.id}
+                ref={el => itemRefs.current[index] = el}
+                id={`carousel-item-${index}`}
+                role="option"
+                aria-selected={isFocused}
+                className={cn(
+                  "relative cursor-pointer transition-all duration-500 ease-out flex-shrink-0",
+                  "hover:scale-110",
+                  isFocused 
+                    ? "scale-110 z-10" 
+                    : "scale-85 opacity-50"
                 )}
+                onClick={() => handleItemClick(item, index)}
+                onMouseEnter={() => setFocusedIndex(index)}
+              >
+                <div className="relative w-80 h-[480px]">
+                  <img
+                    src={`https://image.tmdb.org/t/p/w500${item.poster_path}`}
+                    alt={getTitle(item)}
+                    className={cn(
+                      "w-full h-full object-cover rounded-lg transition-all duration-500",
+                      isFocused && "ring-4 ring-white shadow-2xl shadow-white/20"
+                    )}
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = '/placeholder.svg';
+                    }}
+                  />
+                  
+                  {isFocused && (
+                    <div className="absolute inset-0 rounded-lg bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+                  )}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Movie Information Section */}
+      <div className="bg-black/95 backdrop-blur-sm p-8 border-t border-gray-800">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="mb-2">
+            <span className="text-sm font-medium text-gray-400 uppercase tracking-wide">
+              {getContentType(selectedItem)}
+            </span>
+          </div>
+          
+          <h2 className="text-4xl font-bold mb-4 text-white">
+            {getTitle(selectedItem)}
+          </h2>
+          
+          <div className="flex items-center justify-center gap-6 mb-6 text-sm">
+            {getReleaseYear(selectedItem) && (
+              <span className="text-gray-300">{getReleaseYear(selectedItem)}</span>
+            )}
+            {selectedItem.vote_average && (
+              <div className="flex items-center gap-2">
+                <span className="text-gray-300">Rating:</span>
+                <span className="text-white font-medium">{selectedItem.vote_average.toFixed(1)}/10</span>
+              </div>
+            )}
+            <span className="text-gray-300">HD</span>
+          </div>
+          
+          <p className="text-lg leading-relaxed text-gray-200 max-w-3xl mx-auto">
+            {selectedItem.overview || 'No description available for this title.'}
+          </p>
+        </div>
       </div>
 
       {/* Navigation hint */}
-      <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2">
-        <div className="flex items-center gap-4 text-gray-400 text-sm">
+      <div className="absolute top-8 left-1/2 transform -translate-x-1/2">
+        <div className="flex items-center gap-4 text-gray-400 text-sm bg-black/50 px-4 py-2 rounded-full backdrop-blur-sm">
           <span>← →</span>
           <span>Navigate</span>
           <span>•</span>
