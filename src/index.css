@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
 @tailwind base;
@@ -76,14 +75,4 @@
   body {
     @apply bg-background text-foreground;
   }
-}
-
-/* Custom scrollbar styles for Netflix-like horizontal scrolling */
-.scrollbar-hide {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;
 }
