@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -36,7 +35,7 @@ const HorizontalMovieCarousel = ({ items, onItemSelect }: HorizontalMovieCarouse
   };
 
   const getContentType = (item: MediaItem) => {
-    if (item.media_type === 'tv') return 'TV Series';
+    if (item.media_type === 'tv') return 'TV';
     return 'Movie';
   };
 
@@ -186,12 +185,6 @@ const HorizontalMovieCarousel = ({ items, onItemSelect }: HorizontalMovieCarouse
       {/* Movie Information Section */}
       <div className="bg-black/95 backdrop-blur-sm p-8 border-t border-gray-800">
         <div className="max-w-4xl mx-auto text-center">
-          <div className="mb-2">
-            <span className="text-sm font-medium text-gray-400 uppercase tracking-wide">
-              {getContentType(selectedItem)}
-            </span>
-          </div>
-          
           <h2 className="text-4xl font-bold mb-4 text-white">
             {getTitle(selectedItem)}
           </h2>
@@ -206,6 +199,7 @@ const HorizontalMovieCarousel = ({ items, onItemSelect }: HorizontalMovieCarouse
                 <span className="text-white font-medium">{selectedItem.vote_average.toFixed(1)}/10</span>
               </div>
             )}
+            <span className="text-gray-300">{getContentType(selectedItem)}</span>
             <span className="text-gray-300">HD</span>
           </div>
           
