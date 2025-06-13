@@ -8,7 +8,7 @@ import { Moon, Sun, Search } from "lucide-react";
 import { useTheme } from "@/components/theme-provider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { tmdbApi } from "@/lib/tmdb";
-import VerticalMediaMenu from "@/components/VerticalMediaMenu";
+import HorizontalMovieCarousel from "@/components/HorizontalMovieCarousel";
 
 type MovieItem = {
   id: number;
@@ -167,7 +167,7 @@ const Index = () => {
           </div>
         </div>
       ) : (
-        <VerticalMediaMenu items={filteredMovies || []} />
+        <HorizontalMovieCarousel items={filteredMovies || []} />
       )}
     </div>
   );
