@@ -21,6 +21,7 @@ const HorizontalMovieCarousel = ({
   onItemSelect
 }: HorizontalMovieCarouselProps) => {
   const [focusedIndex, setFocusedIndex] = useState(0);
+  const [isScrolling, setIsScrolling] = useState(false);
   const carouselRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
   const navigate = useNavigate();
@@ -50,33 +51,48 @@ const HorizontalMovieCarousel = ({
   const scrollToItem = useCallback((index: number) => {
     const item = itemRefs.current[index];
     if (item && carouselRef.current) {
-      const carouselRect = carouselRef.current.getBoundingClientRect();
-      const itemRect = item.getBoundingClientRect();
-      const carouselCenter = carouselRect.left + carouselRect.width / 2;
-      const itemCenter = itemRect.left + itemRect.width / 2;
-      const scrollAmount = itemCenter - carouselCenter;
-      carouselRef.current.scrollBy({
-        left: scrollAmount,
+      // Calculate the position more precisely
+      const carousel = carouselRef.current;
+      const carouselWidth = carousel.clientWidth;
+      const itemWidth = 320 + 48; // 320px poster width + 48px gap (3rem = 48px)
+      const carouselCenter = carouselWidth / 2;
+      
+      // Calculate target scroll position to center the item
+      const targetScrollLeft = (index * itemWidth) + (itemWidth / 2) - carouselCenter;
+      
+      carousel.scrollTo({
+        left: Math.max(0, targetScrollLeft),
         behavior: 'smooth'
       });
     }
   }, []);
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
-    if (!items.length) return;
+    if (!items.length || isScrolling) return;
+    
     switch (event.key) {
       case 'ArrowLeft':
         event.preventDefault();
+        setIsScrolling(true);
         setFocusedIndex(prev => {
           const newIndex = prev <= 0 ? items.length - 1 : prev - 1;
-          scrollToItem(newIndex);
+          requestAnimationFrame(() => {
+            scrollToItem(newIndex);
+            // Reset scrolling state after animation
+            setTimeout(() => setIsScrolling(false), 150);
+          });
           return newIndex;
         });
         break;
       case 'ArrowRight':
         event.preventDefault();
+        setIsScrolling(true);
         setFocusedIndex(prev => {
           const newIndex = prev >= items.length - 1 ? 0 : prev + 1;
-          scrollToItem(newIndex);
+          requestAnimationFrame(() => {
+            scrollToItem(newIndex);
+            // Reset scrolling state after animation
+            setTimeout(() => setIsScrolling(false), 150);
+          });
           return newIndex;
         });
         break;
@@ -88,7 +104,7 @@ const HorizontalMovieCarousel = ({
         }
         break;
     }
-  }, [items, focusedIndex, scrollToItem]);
+  }, [items, focusedIndex, scrollToItem, isScrolling]);
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
@@ -113,9 +129,10 @@ const HorizontalMovieCarousel = ({
   return <div className="h-screen bg-black text-white flex flex-col overflow-hidden">
       {/* Carousel Container */}
       <div className="flex-1 flex items-center justify-center">
-        <div ref={carouselRef} className="flex items-center gap-12 px-96 overflow-x-auto scrollbar-hide" style={{
+        <div ref={carouselRef} className="flex items-center gap-12 px-96 overflow-x-auto scrollbar-hide scroll-smooth" style={{
         scrollbarWidth: 'none',
-        msOverflowStyle: 'none'
+        msOverflowStyle: 'none',
+        scrollBehavior: 'smooth'
       }} tabIndex={0} role="listbox" aria-label="Movies and TV Series Carousel" aria-activedescendant={`carousel-item-${focusedIndex}`}>
           {items.map((item, index) => {
           const isFocused = index === focusedIndex;
