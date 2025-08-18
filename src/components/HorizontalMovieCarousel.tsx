@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 type MediaItem = {
@@ -21,6 +21,7 @@ const HorizontalMovieCarousel = ({
   onItemSelect
 }: HorizontalMovieCarouselProps) => {
   const [focusedIndex, setFocusedIndex] = useState(0);
+  const [infiniteScrollIndex, setInfiniteScrollIndex] = useState(0);
   const [isScrolling, setIsScrolling] = useState(false);
   const [isKeyNavigating, setIsKeyNavigating] = useState(false);
   const carouselRef = useRef<HTMLDivElement>(null);
@@ -28,6 +29,15 @@ const HorizontalMovieCarousel = ({
   const lastKeyPressTime = useRef<number>(0);
   const keyNavigationTimeout = useRef<NodeJS.Timeout>();
   const navigate = useNavigate();
+
+  // Create infinite scroll array by triplicating items
+  const infiniteItems = useMemo(() => {
+    if (items.length === 0) return [];
+    return [...items, ...items, ...items];
+  }, [items]);
+
+  // Start at the middle set of items
+  const initialScrollIndex = items.length;
   const getTitle = (item: MediaItem) => {
     return item.title || item.name || 'Unknown Title';
   };
@@ -52,38 +62,54 @@ const HorizontalMovieCarousel = ({
     }
   };
   const scrollToItem = useCallback((index: number, isKeyboardNavigation: boolean = false) => {
-    const item = itemRefs.current[index];
-    if (item && carouselRef.current) {
-      // Calculate the position to center the item perfectly
-      const carousel = carouselRef.current;
-      const itemWidth = 384 + 48; // 384px poster width (w-96) + 48px gap (3rem = 48px)
-      
-      // Calculate target scroll position to center the item
-      // Since we have 50vw padding, we need to account for that
-      const targetScrollLeft = index * itemWidth;
-      
-      // Use longer duration for keyboard navigation for smoother experience
-      const scrollOptions: ScrollToOptions = {
-        left: targetScrollLeft,
-        behavior: 'smooth'
-      };
-      
-      if (isKeyboardNavigation) {
-        // Apply custom CSS for even smoother keyboard navigation
-        carousel.style.scrollBehavior = 'smooth';
-        carousel.style.transition = 'scroll-left 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-      }
-      
-      carousel.scrollTo(scrollOptions);
-      
-      // Reset transition after scroll
-      if (isKeyboardNavigation) {
-        setTimeout(() => {
-          carousel.style.transition = '';
-        }, 600);
-      }
+    if (!carouselRef.current || !items.length) return;
+
+    const carousel = carouselRef.current;
+    const itemWidth = 384 + 48; // 384px poster width (w-96) + 48px gap (3rem = 48px)
+    
+    // Calculate target scroll position to center the item in infinite scroll
+    const targetScrollLeft = index * itemWidth;
+    
+    const scrollOptions: ScrollToOptions = {
+      left: targetScrollLeft,
+      behavior: 'smooth'
+    };
+    
+    if (isKeyboardNavigation) {
+      carousel.style.scrollBehavior = 'smooth';
+      carousel.style.transition = 'scroll-left 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
     }
-  }, []);
+    
+    carousel.scrollTo(scrollOptions);
+    
+    if (isKeyboardNavigation) {
+      setTimeout(() => {
+        carousel.style.transition = '';
+      }, 600);
+    }
+  }, [items.length]);
+
+  // Handle infinite scroll repositioning
+  const handleInfiniteScroll = useCallback(() => {
+    if (!carouselRef.current || !items.length) return;
+    
+    const carousel = carouselRef.current;
+    const itemWidth = 384 + 48;
+    const sectionWidth = items.length * itemWidth;
+    
+    // If we're at the start of first section, jump to start of middle section
+    if (infiniteScrollIndex < items.length * 0.5) {
+      const newIndex = infiniteScrollIndex + items.length;
+      setInfiniteScrollIndex(newIndex);
+      carousel.scrollLeft = newIndex * itemWidth;
+    }
+    // If we're at the end of third section, jump to end of middle section  
+    else if (infiniteScrollIndex >= items.length * 2.5) {
+      const newIndex = infiniteScrollIndex - items.length;
+      setInfiniteScrollIndex(newIndex);
+      carousel.scrollLeft = newIndex * itemWidth;
+    }
+  }, [infiniteScrollIndex, items.length]);
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
     if (!items.length || isScrolling || isKeyNavigating) return;
     
@@ -103,12 +129,17 @@ const HorizontalMovieCarousel = ({
         setIsScrolling(true);
         setIsKeyNavigating(true);
         
-        setFocusedIndex(prev => {
-          const newIndex = prev <= 0 ? items.length - 1 : prev - 1;
+        setInfiniteScrollIndex(prev => {
+          const newIndex = prev - 1;
+          const actualItemIndex = newIndex % items.length;
+          const displayIndex = actualItemIndex < 0 ? items.length - 1 : actualItemIndex;
+          
+          setFocusedIndex(displayIndex);
+          
           requestAnimationFrame(() => {
             scrollToItem(newIndex, true);
-            // Reset navigation states with longer timeout for smoother experience
             setTimeout(() => {
+              handleInfiniteScroll();
               setIsScrolling(false);
               setIsKeyNavigating(false);
             }, 600);
@@ -116,18 +147,23 @@ const HorizontalMovieCarousel = ({
           return newIndex;
         });
         break;
+        
       case 'ArrowRight':
         event.preventDefault();
         lastKeyPressTime.current = currentTime;
         setIsScrolling(true);
         setIsKeyNavigating(true);
         
-        setFocusedIndex(prev => {
-          const newIndex = prev >= items.length - 1 ? 0 : prev + 1;
+        setInfiniteScrollIndex(prev => {
+          const newIndex = prev + 1;
+          const actualItemIndex = newIndex % items.length;
+          
+          setFocusedIndex(actualItemIndex);
+          
           requestAnimationFrame(() => {
             scrollToItem(newIndex, true);
-            // Reset navigation states with longer timeout for smoother experience
             setTimeout(() => {
+              handleInfiniteScroll();
               setIsScrolling(false);
               setIsKeyNavigating(false);
             }, 600);
@@ -143,7 +179,7 @@ const HorizontalMovieCarousel = ({
         }
         break;
     }
-  }, [items, focusedIndex, scrollToItem, isScrolling, isKeyNavigating]);
+  }, [items, focusedIndex, scrollToItem, isScrolling, isKeyNavigating, handleInfiniteScroll]);
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);
     return () => {
@@ -160,9 +196,12 @@ const HorizontalMovieCarousel = ({
     }
   }, [items, focusedIndex]);
   useEffect(() => {
-    // Center the first item on initial load
+    // Initialize at the middle section of infinite items
     if (items.length > 0) {
-      setTimeout(() => scrollToItem(0), 100);
+      const startIndex = items.length; // Start at middle section
+      setInfiniteScrollIndex(startIndex);
+      setFocusedIndex(0); // Display first item
+      setTimeout(() => scrollToItem(startIndex), 100);
     }
   }, [items, scrollToItem]);
   if (!items.length) {
@@ -189,22 +228,27 @@ const HorizontalMovieCarousel = ({
           aria-label="Movies and TV Series Carousel" 
           aria-activedescendant={`carousel-item-${focusedIndex}`}
         >
-          {items.map((item, index) => {
-          const isFocused = index === focusedIndex;
-          return <div 
-            key={item.id} 
-            ref={el => itemRefs.current[index] = el} 
-            id={`carousel-item-${index}`} 
-            role="option" 
-            aria-selected={isFocused} 
-            className={cn(
-              "relative cursor-pointer transition-all duration-500 ease-out flex-shrink-0",
-              "hover:scale-110",
-              isFocused ? "scale-110 z-10" : "scale-85 opacity-50"
-            )} 
-            onClick={() => handleItemClick(item, index)} 
-            onMouseEnter={() => setFocusedIndex(index)}
-          >
+          {infiniteItems.map((item, index) => {
+            const actualItemIndex = index % items.length;
+            const isFocused = actualItemIndex === focusedIndex;
+            
+            return <div 
+              key={`${item.id}-${Math.floor(index / items.length)}`} 
+              ref={el => itemRefs.current[index] = el} 
+              id={`carousel-item-${index}`} 
+              role="option" 
+              aria-selected={isFocused} 
+              className={cn(
+                "relative cursor-pointer transition-all duration-500 ease-out flex-shrink-0",
+                "hover:scale-110",
+                isFocused ? "scale-110 z-10" : "scale-85 opacity-50"
+              )} 
+              onClick={() => handleItemClick(item, actualItemIndex)} 
+              onMouseEnter={() => {
+                setFocusedIndex(actualItemIndex);
+                setInfiniteScrollIndex(index);
+              }}
+            >
                 <div className="relative w-96 h-[600px]">
                   <img 
                     src={`https://image.tmdb.org/t/p/w500${item.poster_path}`} 
