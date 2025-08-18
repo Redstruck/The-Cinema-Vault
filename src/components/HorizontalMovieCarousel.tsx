@@ -54,7 +54,7 @@ const HorizontalMovieCarousel = ({
       // Calculate the position more precisely
       const carousel = carouselRef.current;
       const carouselWidth = carousel.clientWidth;
-      const itemWidth = 320 + 48; // 320px poster width + 48px gap (3rem = 48px)
+      const itemWidth = 384 + 48; // 384px poster width (w-96) + 48px gap (3rem = 48px)
       const carouselCenter = carouselWidth / 2;
       
       // Calculate target scroll position to center the item
@@ -137,8 +137,8 @@ const HorizontalMovieCarousel = ({
           {items.map((item, index) => {
           const isFocused = index === focusedIndex;
           return <div key={item.id} ref={el => itemRefs.current[index] = el} id={`carousel-item-${index}`} role="option" aria-selected={isFocused} className={cn("relative cursor-pointer transition-all duration-500 ease-out flex-shrink-0", "hover:scale-110", isFocused ? "scale-110 z-10" : "scale-85 opacity-50")} onClick={() => handleItemClick(item, index)} onMouseEnter={() => setFocusedIndex(index)}>
-                <div className="relative w-80 h-[480px]">
-                  <img src={`https://image.tmdb.org/t/p/w500${item.poster_path}`} alt={getTitle(item)} className={cn("w-full h-full object-cover rounded-lg transition-all duration-500", isFocused && "ring-2 ring-white shadow-2xl shadow-white/20")} onError={e => {
+                <div className="relative w-96 h-[600px]">
+                  <img src={`https://image.tmdb.org/t/p/w500${item.poster_path}`} alt={getTitle(item)} className={cn("w-full h-full object-contain rounded-lg transition-all duration-500", isFocused && "ring-2 ring-white shadow-2xl shadow-white/20")} onError={e => {
                 const target = e.target as HTMLImageElement;
                 target.src = '/placeholder.svg';
               }} />
@@ -151,13 +151,13 @@ const HorizontalMovieCarousel = ({
       </div>
 
       {/* Movie Information Section */}
-      <div className="bg-black/95 backdrop-blur-sm p-8 border-t border-gray-800 mx-0">
+      <div className="bg-black/95 backdrop-blur-sm p-6 border-t border-gray-800 mx-0">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl font-bold mb-4 text-white text-center">
+          <h2 className="text-3xl font-bold mb-3 text-white text-center">
             {getTitle(selectedItem)}
           </h2>
           
-          <div className="flex items-center justify-center gap-6 mb-6 text-sm">
+          <div className="flex items-center justify-center gap-6 mb-4 text-sm">
             {getReleaseYear(selectedItem) && <span className="text-gray-300">{getReleaseYear(selectedItem)}</span>}
             {selectedItem.vote_average && <div className="flex items-center gap-2">
                 <span className="text-gray-300">Rating:</span>
@@ -167,7 +167,7 @@ const HorizontalMovieCarousel = ({
             <span className="text-gray-300">HD</span>
           </div>
           
-          <p className="leading-loose text-gray-200 max-w-3xl text-center px-0 py-0 my-0 mx-[92px] text-base font-normal">
+          <p className="leading-relaxed text-gray-200 max-w-3xl text-center px-0 py-0 my-0 mx-[92px] text-sm font-normal">
             {selectedItem.overview || 'No description available for this title.'}
           </p>
         </div>
