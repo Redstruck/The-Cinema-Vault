@@ -188,11 +188,7 @@ const MovieDetail = () => {
                       {media.genres?.map(genre => genre.name).join(", ")}
                     </div>
                     {getAdditionalInfo()}
-                    {media.tagline && (
-                      <div>
-                        <span className="font-semibold">Tagline:</span> {media.tagline}
-                      </div>
-                    )}                  <div className="border-t pt-4">
+                    <div className="border-t pt-4">
                     <StreamingProviders 
                       movieId={id as string} 
                       mediaType={media.media_type || 'movie'} 
