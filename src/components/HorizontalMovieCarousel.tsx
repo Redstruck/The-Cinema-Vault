@@ -167,7 +167,7 @@ const HorizontalMovieCarousel = ({
             <span className="text-gray-300">HD</span>
           </div>
           
-          <p className="leading-relaxed text-gray-200 max-w-3xl text-center px-0 py-0 my-0 mx-[92px] text-sm font-normal">
+          <p className="leading-relaxed text-gray-200 max-w-5xl text-center px-0 py-0 my-0 mx-auto text-base font-normal">
             {selectedItem.overview || 'No description available for this title.'}
           </p>
         </div>
