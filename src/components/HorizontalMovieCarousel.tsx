@@ -121,7 +121,7 @@ const HorizontalMovieCarousel = ({
           const isFocused = index === focusedIndex;
           return <div key={item.id} ref={el => itemRefs.current[index] = el} id={`carousel-item-${index}`} role="option" aria-selected={isFocused} className={cn("relative cursor-pointer transition-all duration-500 ease-out flex-shrink-0", "hover:scale-110", isFocused ? "scale-110 z-10" : "scale-85 opacity-50")} onClick={() => handleItemClick(item, index)} onMouseEnter={() => setFocusedIndex(index)}>
                 <div className="relative w-80 h-[480px]">
-                  <img src={`https://image.tmdb.org/t/p/w500${item.poster_path}`} alt={getTitle(item)} className={cn("w-full h-full object-cover rounded-lg transition-all duration-500", isFocused && "ring-4 ring-white shadow-2xl shadow-white/20")} onError={e => {
+                  <img src={`https://image.tmdb.org/t/p/w500${item.poster_path}`} alt={getTitle(item)} className={cn("w-full h-full object-cover rounded-lg transition-all duration-500", isFocused && "ring-2 ring-white/60 shadow-2xl shadow-white/20")} onError={e => {
                 const target = e.target as HTMLImageElement;
                 target.src = '/placeholder.svg';
               }} />
