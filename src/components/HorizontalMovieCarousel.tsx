@@ -22,8 +22,11 @@ const HorizontalMovieCarousel = ({
 }: HorizontalMovieCarouselProps) => {
   const [focusedIndex, setFocusedIndex] = useState(0);
   const [isScrolling, setIsScrolling] = useState(false);
+  const [isKeyNavigating, setIsKeyNavigating] = useState(false);
   const carouselRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const lastKeyPressTime = useRef<number>(0);
+  const keyNavigationTimeout = useRef<NodeJS.Timeout>();
   const navigate = useNavigate();
   const getTitle = (item: MediaItem) => {
     return item.title || item.name || 'Unknown Title';
@@ -48,7 +51,7 @@ const HorizontalMovieCarousel = ({
       });
     }
   };
-  const scrollToItem = useCallback((index: number) => {
+  const scrollToItem = useCallback((index: number, isKeyboardNavigation: boolean = false) => {
     const item = itemRefs.current[index];
     if (item && carouselRef.current) {
       // Calculate the position more precisely
@@ -60,38 +63,75 @@ const HorizontalMovieCarousel = ({
       // Calculate target scroll position to center the item
       const targetScrollLeft = (index * itemWidth) + (itemWidth / 2) - carouselCenter;
       
-      carousel.scrollTo({
+      // Use longer duration for keyboard navigation for smoother experience
+      const scrollOptions: ScrollToOptions = {
         left: Math.max(0, targetScrollLeft),
         behavior: 'smooth'
-      });
+      };
+      
+      if (isKeyboardNavigation) {
+        // Apply custom CSS for even smoother keyboard navigation
+        carousel.style.scrollBehavior = 'smooth';
+        carousel.style.transition = 'scroll-left 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+      }
+      
+      carousel.scrollTo(scrollOptions);
+      
+      // Reset transition after scroll
+      if (isKeyboardNavigation) {
+        setTimeout(() => {
+          carousel.style.transition = '';
+        }, 600);
+      }
     }
   }, []);
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
-    if (!items.length || isScrolling) return;
+    if (!items.length || isScrolling || isKeyNavigating) return;
+    
+    const currentTime = Date.now();
+    const timeSinceLastKeyPress = currentTime - lastKeyPressTime.current;
+    
+    // Prevent rapid-fire navigation - require at least 400ms between key presses
+    if (timeSinceLastKeyPress < 400) {
+      event.preventDefault();
+      return;
+    }
     
     switch (event.key) {
       case 'ArrowLeft':
         event.preventDefault();
+        lastKeyPressTime.current = currentTime;
         setIsScrolling(true);
+        setIsKeyNavigating(true);
+        
         setFocusedIndex(prev => {
           const newIndex = prev <= 0 ? items.length - 1 : prev - 1;
           requestAnimationFrame(() => {
-            scrollToItem(newIndex);
-            // Reset scrolling state after animation
-            setTimeout(() => setIsScrolling(false), 150);
+            scrollToItem(newIndex, true);
+            // Reset navigation states with longer timeout for smoother experience
+            setTimeout(() => {
+              setIsScrolling(false);
+              setIsKeyNavigating(false);
+            }, 600);
           });
           return newIndex;
         });
         break;
       case 'ArrowRight':
         event.preventDefault();
+        lastKeyPressTime.current = currentTime;
         setIsScrolling(true);
+        setIsKeyNavigating(true);
+        
         setFocusedIndex(prev => {
           const newIndex = prev >= items.length - 1 ? 0 : prev + 1;
           requestAnimationFrame(() => {
-            scrollToItem(newIndex);
-            // Reset scrolling state after animation
-            setTimeout(() => setIsScrolling(false), 150);
+            scrollToItem(newIndex, true);
+            // Reset navigation states with longer timeout for smoother experience
+            setTimeout(() => {
+              setIsScrolling(false);
+              setIsKeyNavigating(false);
+            }, 600);
           });
           return newIndex;
         });
@@ -104,10 +144,16 @@ const HorizontalMovieCarousel = ({
         }
         break;
     }
-  }, [items, focusedIndex, scrollToItem, isScrolling]);
+  }, [items, focusedIndex, scrollToItem, isScrolling, isKeyNavigating]);
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      // Clear any pending timeouts on cleanup
+      if (keyNavigationTimeout.current) {
+        clearTimeout(keyNavigationTimeout.current);
+      }
+    };
   }, [handleKeyDown]);
   useEffect(() => {
     if (items.length > 0 && focusedIndex >= items.length) {
@@ -175,12 +221,8 @@ const HorizontalMovieCarousel = ({
 
       {/* Navigation hint */}
       <div className="absolute top-8 left-1/2 transform -translate-x-1/2">
-        <div className="flex items-center gap-4 text-gray-400 text-sm bg-black/50 px-4 py-2 rounded-full backdrop-blur-sm">
-          <span>← →</span>
-          <span>Navigate</span>
-          <span>•</span>
-          <span>Enter</span>
-          <span>Select</span>
+        <div className="flex items-center gap-2 text-gray-400 text-sm bg-gray-700/80 px-4 py-2 rounded-full backdrop-blur-sm">
+          <span>← Navigate →</span>
         </div>
       </div>
     </div>;
