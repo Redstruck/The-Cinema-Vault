@@ -54,18 +54,17 @@ const HorizontalMovieCarousel = ({
   const scrollToItem = useCallback((index: number, isKeyboardNavigation: boolean = false) => {
     const item = itemRefs.current[index];
     if (item && carouselRef.current) {
-      // Calculate the position more precisely
+      // Calculate the position to center the item perfectly
       const carousel = carouselRef.current;
-      const carouselWidth = carousel.clientWidth;
       const itemWidth = 384 + 48; // 384px poster width (w-96) + 48px gap (3rem = 48px)
-      const carouselCenter = carouselWidth / 2;
       
       // Calculate target scroll position to center the item
-      const targetScrollLeft = (index * itemWidth) + (itemWidth / 2) - carouselCenter;
+      // Since we have 50vw padding, we need to account for that
+      const targetScrollLeft = index * itemWidth;
       
       // Use longer duration for keyboard navigation for smoother experience
       const scrollOptions: ScrollToOptions = {
-        left: Math.max(0, targetScrollLeft),
+        left: targetScrollLeft,
         behavior: 'smooth'
       };
       
@@ -174,20 +173,51 @@ const HorizontalMovieCarousel = ({
   const selectedItem = items[focusedIndex];
   return <div className="h-screen bg-black text-white flex flex-col overflow-hidden">
       {/* Carousel Container */}
-      <div className="flex-1 flex items-center justify-center">
-        <div ref={carouselRef} className="flex items-center gap-12 px-96 overflow-x-auto scrollbar-hide scroll-smooth" style={{
-        scrollbarWidth: 'none',
-        msOverflowStyle: 'none',
-        scrollBehavior: 'smooth'
-      }} tabIndex={0} role="listbox" aria-label="Movies and TV Series Carousel" aria-activedescendant={`carousel-item-${focusedIndex}`}>
+      <div className="flex-1 flex items-center justify-center relative">
+        <div 
+          ref={carouselRef} 
+          className="flex items-center gap-12 overflow-x-auto scrollbar-hide scroll-smooth w-full" 
+          style={{
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+            scrollBehavior: 'smooth',
+            paddingLeft: '50vw',
+            paddingRight: '50vw'
+          }} 
+          tabIndex={0} 
+          role="listbox" 
+          aria-label="Movies and TV Series Carousel" 
+          aria-activedescendant={`carousel-item-${focusedIndex}`}
+        >
           {items.map((item, index) => {
           const isFocused = index === focusedIndex;
-          return <div key={item.id} ref={el => itemRefs.current[index] = el} id={`carousel-item-${index}`} role="option" aria-selected={isFocused} className={cn("relative cursor-pointer transition-all duration-500 ease-out flex-shrink-0", "hover:scale-110", isFocused ? "scale-110 z-10" : "scale-85 opacity-50")} onClick={() => handleItemClick(item, index)} onMouseEnter={() => setFocusedIndex(index)}>
+          return <div 
+            key={item.id} 
+            ref={el => itemRefs.current[index] = el} 
+            id={`carousel-item-${index}`} 
+            role="option" 
+            aria-selected={isFocused} 
+            className={cn(
+              "relative cursor-pointer transition-all duration-500 ease-out flex-shrink-0",
+              "hover:scale-110",
+              isFocused ? "scale-110 z-10" : "scale-85 opacity-50"
+            )} 
+            onClick={() => handleItemClick(item, index)} 
+            onMouseEnter={() => setFocusedIndex(index)}
+          >
                 <div className="relative w-96 h-[600px]">
-                  <img src={`https://image.tmdb.org/t/p/w500${item.poster_path}`} alt={getTitle(item)} className={cn("w-full h-full object-contain rounded-lg transition-all duration-500", isFocused && "ring-2 ring-white shadow-2xl shadow-white/20")} onError={e => {
-                const target = e.target as HTMLImageElement;
-                target.src = '/placeholder.svg';
-              }} />
+                  <img 
+                    src={`https://image.tmdb.org/t/p/w500${item.poster_path}`} 
+                    alt={getTitle(item)} 
+                    className={cn(
+                      "w-full h-full object-contain rounded-lg transition-all duration-500",
+                      isFocused && "ring-2 ring-white shadow-2xl shadow-white/20"
+                    )} 
+                    onError={e => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = '/placeholder.svg';
+                    }} 
+                  />
                   
                   {isFocused && <div className="absolute inset-0 rounded-lg bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />}
                 </div>
