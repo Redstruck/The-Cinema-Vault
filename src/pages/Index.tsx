@@ -8,6 +8,7 @@ import { useTheme } from "@/components/theme-provider";
 import { Skeleton } from "@/components/ui/skeleton";
 import { tmdbApi } from "@/lib/tmdb";
 import HorizontalMovieCarousel from "@/components/HorizontalMovieCarousel";
+import Footer from "@/components/Footer";
 type MovieItem = {
   id: number;
   title?: string;
@@ -121,6 +122,9 @@ const Index = () => {
             </p>
           </div>
         </div> : <HorizontalMovieCarousel items={filteredMovies || []} />}
+      
+      {/* TMDb Attribution Footer */}
+      <Footer />
     </div>;
 };
 export default Index;
