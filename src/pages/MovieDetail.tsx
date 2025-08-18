@@ -6,6 +6,7 @@ import { ArrowLeft } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import Footer from "@/components/Footer";
 import StreamingProviders from "@/components/StreamingProviders";
+import Cast from "@/components/Cast";
 import { tmdbApi } from "@/lib/tmdb";
 
 const MovieDetail = () => {
@@ -149,54 +150,62 @@ const MovieDetail = () => {
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div>
-                <img
-                  src={`https://image.tmdb.org/t/p/w500${media.poster_path}`}
-                  alt={media.title}
-                  className="w-full rounded-lg shadow-lg"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = '/placeholder.svg';
-                  }}
-                />
-              </div>
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <h1 className="text-4xl font-bold">{media.title}</h1>
-                  <span className="bg-primary/10 text-primary px-2 py-1 rounded text-sm font-medium">
-                    {getContentType()}
-                  </span>
+            <div className="space-y-12">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                  <img
+                    src={`https://image.tmdb.org/t/p/w500${media.poster_path}`}
+                    alt={media.title}
+                    className="w-full rounded-lg shadow-lg"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.src = '/placeholder.svg';
+                    }}
+                  />
                 </div>
-                <p className="text-lg mb-4">{media.overview}</p>
-                <div className="space-y-4">
-                  <div>
-                    <span className="font-semibold">Release Date:</span> {media.release_date}
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <h1 className="text-4xl font-bold">{media.title}</h1>
+                    <span className="bg-primary/10 text-primary px-2 py-1 rounded text-sm font-medium">
+                      {getContentType()}
+                    </span>
                   </div>
-                  <div>
-                    <span className="font-semibold">Rating:</span> {media.vote_average?.toFixed(1)}/10
-                  </div>
-                  <div>
-                    <span className="font-semibold">Runtime:</span> {getRuntime()}
-                  </div>
-                  <div>
-                    <span className="font-semibold">Genres:</span>{" "}
-                    {media.genres?.map(genre => genre.name).join(", ")}
-                  </div>
-                  {getAdditionalInfo()}
-                  {media.tagline && (
+                  <p className="text-lg mb-4">{media.overview}</p>
+                  <div className="space-y-4">
                     <div>
-                      <span className="font-semibold">Tagline:</span> {media.tagline}
+                      <span className="font-semibold">Release Date:</span> {media.release_date}
                     </div>
-                  )}
-                  <div className="border-t pt-4">
-                    <StreamingProviders 
-                      movieId={id as string} 
-                      mediaType={media.media_type || 'movie'} 
-                    />
+                    <div>
+                      <span className="font-semibold">Rating:</span> {media.vote_average?.toFixed(1)}/10
+                    </div>
+                    <div>
+                      <span className="font-semibold">Runtime:</span> {getRuntime()}
+                    </div>
+                    <div>
+                      <span className="font-semibold">Genres:</span>{" "}
+                      {media.genres?.map(genre => genre.name).join(", ")}
+                    </div>
+                    {getAdditionalInfo()}
+                    {media.tagline && (
+                      <div>
+                        <span className="font-semibold">Tagline:</span> {media.tagline}
+                      </div>
+                    )}
+                    <div className="border-t pt-4">
+                      <StreamingProviders 
+                        movieId={id as string} 
+                        mediaType={media.media_type || 'movie'} 
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
+              
+              {/* Cast Section */}
+              <Cast 
+                mediaId={id as string} 
+                mediaType={media.media_type || 'movie'} 
+              />
             </div>
           )}
         </div>

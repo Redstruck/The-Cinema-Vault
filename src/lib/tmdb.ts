@@ -92,6 +92,29 @@ export const tmdbApi = {
     return data;
   },
 
+  async credits(params: { id: string; media_type: string }) {
+    console.log("=== TMDB API CREDITS CALL ===");
+    console.log("Credits params:", params);
+    
+    const endpoint = params.media_type === 'tv' 
+      ? `/tv/${params.id}/credits`
+      : `/movie/${params.id}/credits`;
+    
+    const { data, error } = await supabase.functions.invoke('tmdb-api', {
+      body: {
+        endpoint,
+        params: {}
+      }
+    });
+
+    console.log("Credits API response:", data);
+    console.log("Credits API error:", error);
+    console.log("==============================");
+
+    if (error) throw error;
+    return data;
+  },
+
   async mediaInfo(params: { id: string; media_type?: string }) {
     console.log("=== TMDB API MEDIA INFO CALL ===");
     console.log("Media info params:", params);
