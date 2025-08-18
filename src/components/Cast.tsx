@@ -13,9 +13,10 @@ interface CastMember {
 interface CastProps {
   mediaId: string;
   mediaType: string;
+  compact?: boolean;
 }
 
-const Cast = ({ mediaId, mediaType }: CastProps) => {
+const Cast = ({ mediaId, mediaType, compact = false }: CastProps) => {
   const { data: credits, isLoading, error } = useQuery({
     queryKey: ["credits", mediaId, mediaType],
     queryFn: async () => {
@@ -46,67 +47,114 @@ const Cast = ({ mediaId, mediaType }: CastProps) => {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <h2 className="text-2xl font-bold">Cast</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {Array.from({ length: 6 }).map((_, index) => (
-            <div key={index} className="space-y-2">
-              <Skeleton className="w-full aspect-[2/3] rounded-lg" />
-              <Skeleton className="h-4 w-full" />
-              <Skeleton className="h-3 w-3/4" />
-            </div>
-          ))}
-        </div>
+      <div className="space-y-3">
+        <h2 className={compact ? "text-lg font-bold" : "text-2xl font-bold"}>Cast</h2>
+        {compact ? (
+          <div className="grid grid-cols-5 gap-4">
+            {Array.from({ length: 10 }).map((_, index) => (
+              <div key={index} className="space-y-2">
+                <Skeleton className="w-full aspect-[2/3] rounded-lg" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-3 w-3/4" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            {Array.from({ length: 6 }).map((_, index) => (
+              <div key={index} className="space-y-2">
+                <Skeleton className="w-full aspect-[2/3] rounded-lg" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-3 w-3/4" />
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
 
   if (error || !credits?.cast) {
     return (
-      <div className="space-y-4">
-        <h2 className="text-2xl font-bold">Cast</h2>
-        <p className="text-muted-foreground">Cast information not available.</p>
+      <div className="space-y-3">
+        <h2 className={compact ? "text-lg font-bold" : "text-2xl font-bold"}>Cast</h2>
+        <p className="text-muted-foreground text-sm">Cast information not available.</p>
       </div>
     );
   }
 
-  // Get the top 12 cast members (most important roles)
+  // Get the top 10 cast members (5 in each row)
+  const castCount = compact ? 10 : 12;
   const topCast = credits.cast
     .sort((a: CastMember, b: CastMember) => a.order - b.order)
-    .slice(0, 12);
+    .slice(0, castCount);
 
   return (
-    <div className="space-y-4">
-      <h2 className="text-2xl font-bold">Cast</h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-        {topCast.map((castMember: CastMember) => (
-          <div key={castMember.id} className="space-y-2">
-            <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-muted">
-              <img
-                src={
-                  castMember.profile_path
-                    ? `https://image.tmdb.org/t/p/w300${castMember.profile_path}`
-                    : '/placeholder.svg'
-                }
-                alt={castMember.name}
-                className="w-full h-full object-cover transition-transform hover:scale-105"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.src = '/placeholder.svg';
-                }}
-              />
+    <div className="space-y-3">
+      <h2 className={compact ? "text-lg font-bold" : "text-2xl font-bold"}>Cast</h2>
+      {compact ? (
+        // Compact 5x2 grid layout for desktop
+        <div className="grid grid-cols-5 gap-4">
+          {topCast.map((castMember: CastMember) => (
+            <div key={castMember.id} className="space-y-2">
+              <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-muted">
+                <img
+                  src={
+                    castMember.profile_path
+                      ? `https://image.tmdb.org/t/p/w300${castMember.profile_path}`
+                      : '/placeholder.svg'
+                  }
+                  alt={castMember.name}
+                  className="w-full h-full object-cover transition-transform hover:scale-105"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = '/placeholder.svg';
+                  }}
+                />
+              </div>
+              <div className="space-y-1">
+                <h3 className="font-medium text-sm leading-tight line-clamp-2">
+                  {castMember.name}
+                </h3>
+                <p className="text-xs text-muted-foreground leading-tight line-clamp-2">
+                  {castMember.character}
+                </p>
+              </div>
             </div>
-            <div className="space-y-1">
-              <h3 className="font-medium text-sm leading-tight line-clamp-2">
-                {castMember.name}
-              </h3>
-              <p className="text-xs text-muted-foreground leading-tight line-clamp-2">
-                {castMember.character}
-              </p>
+          ))}
+        </div>
+      ) : (
+        // Full grid layout
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          {topCast.map((castMember: CastMember) => (
+            <div key={castMember.id} className="space-y-2">
+              <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-muted">
+                <img
+                  src={
+                    castMember.profile_path
+                      ? `https://image.tmdb.org/t/p/w300${castMember.profile_path}`
+                      : '/placeholder.svg'
+                  }
+                  alt={castMember.name}
+                  className="w-full h-full object-cover transition-transform hover:scale-105"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = '/placeholder.svg';
+                  }}
+                />
+              </div>
+              <div className="space-y-1">
+                <h3 className="font-medium text-sm leading-tight line-clamp-2">
+                  {castMember.name}
+                </h3>
+                <p className="text-xs text-muted-foreground leading-tight line-clamp-2">
+                  {castMember.character}
+                </p>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

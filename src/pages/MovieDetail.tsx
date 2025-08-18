@@ -150,20 +150,22 @@ const MovieDetail = () => {
               </div>
             </div>
           ) : (
-            <div className="space-y-12">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div>
-                  <img
-                    src={`https://image.tmdb.org/t/p/w500${media.poster_path}`}
-                    alt={media.title}
-                    className="w-full rounded-lg shadow-lg"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = '/placeholder.svg';
-                    }}
-                  />
-                </div>
-                <div>
+            <div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">              {/* Left Column - Movie Poster */}
+              <div>
+                <img
+                  src={`https://image.tmdb.org/t/p/w500${media.poster_path}`}
+                  alt={media.title}
+                  className="w-full rounded-lg shadow-lg"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = '/placeholder.svg';
+                  }}
+                />
+              </div>
+
+                {/* Right Column - Movie Details */}
+                <div className="space-y-6">
                   <div className="flex items-center gap-2 mb-2">
                     <h1 className="text-4xl font-bold">{media.title}</h1>
                     <span className="bg-primary/10 text-primary px-2 py-1 rounded text-sm font-medium">
@@ -190,22 +192,33 @@ const MovieDetail = () => {
                       <div>
                         <span className="font-semibold">Tagline:</span> {media.tagline}
                       </div>
-                    )}
-                    <div className="border-t pt-4">
-                      <StreamingProviders 
-                        movieId={id as string} 
-                        mediaType={media.media_type || 'movie'} 
-                      />
-                    </div>
+                    )}                  <div className="border-t pt-4">
+                    <StreamingProviders 
+                      movieId={id as string} 
+                      mediaType={media.media_type || 'movie'} 
+                    />
                   </div>
+                  
+                  {/* Cast Section - Positioned under Buy section */}
+                  <div className="hidden md:block mt-6">
+                    <Cast 
+                      mediaId={id as string} 
+                      mediaType={media.media_type || 'movie'}
+                      compact={true}
+                    />
+                  </div>
+                </div>
                 </div>
               </div>
               
-              {/* Cast Section */}
-              <Cast 
-                mediaId={id as string} 
-                mediaType={media.media_type || 'movie'} 
-              />
+              {/* Cast Section - Full width on mobile */}
+              <div className="md:hidden mt-8">
+                <Cast 
+                  mediaId={id as string} 
+                  mediaType={media.media_type || 'movie'}
+                  compact={false}
+                />
+              </div>
             </div>
           )}
         </div>
