@@ -12,14 +12,18 @@
 - **Trending Content**: Displays weekly trending movies and TV shows
 - **Search Functionality**: Real-time search across all available content
 - **Detailed Information**: Comprehensive movie/TV show details including ratings, release dates, and descriptions
+- **Cast Information**: Full cast details with profile photos, names, and character roles
 - **Streaming Providers**: Shows where content is available to stream, rent, or buy in the US
+- **TMDb Attribution**: Proper attribution footer for The Movie Database
 
 ### 🎨 User Experience
-- **Netflix-Style Interface**: Horizontal scrolling carousel for content browsing
-- **Dark/Light Theme**: Toggle between dark and light modes
-- **Responsive Design**: Optimized for all device sizes
-- **Keyboard Navigation**: Full keyboard support for accessibility
-- **Smooth Animations**: Tailwind CSS animations for enhanced user experience
+- **Infinite Scroll Carousel**: True infinite horizontal scrolling with seamless looping
+- **Enhanced Navigation**: Smooth arrow-key navigation with 400ms debouncing
+- **Centered Poster Display**: Movies perfectly centered with optimal viewing
+- **Improved Typography**: Enhanced font sizes and readability
+- **Responsive Design**: Optimized for all device sizes with mobile-first approach
+- **Keyboard Navigation**: Full keyboard support with smooth transitions
+- **Visual Polish**: Refined poster borders, spacing, and UI elements
 
 ## Technical Architecture
 
@@ -52,15 +56,16 @@
 src/
 ├── components/           # Reusable UI components
 │   ├── ui/              # shadcn/ui component library
-│   ├── HorizontalMovieCarousel.tsx  # Main content carousel
+│   ├── HorizontalMovieCarousel.tsx  # Infinite scroll carousel
 │   ├── StreamingProviders.tsx       # Streaming availability
-│   ├── Footer.tsx       # Application footer
+│   ├── Cast.tsx         # Cast member display component
+│   ├── Footer.tsx       # TMDb attribution footer
 │   └── theme-provider.tsx          # Theme context provider
 ├── pages/               # Route components
 │   ├── Index.tsx        # Home page with trending content
-│   └── MovieDetail.tsx  # Individual movie/show details
+│   └── MovieDetail.tsx  # Individual movie/show details with cast
 ├── lib/                 # Utility libraries
-│   ├── tmdb.ts          # TMDb API integration
+│   ├── tmdb.ts          # TMDb API integration with credits endpoint
 │   └── utils.ts         # General utilities
 ├── hooks/               # Custom React hooks
 │   └── use-toast.ts     # Toast notification hook
@@ -151,33 +156,72 @@ async mediaInfo(params: { id: string; media_type?: string }) {
 3. **Data Normalization**: Standardize field names between movies and TV
 4. **Error Handling**: Graceful degradation with user feedback
 
-### 5. Carousel Implementation
+### 5. Infinite Scroll Carousel Implementation
 
-#### Horizontal Scrolling with Focus Management
+#### True Infinite Scrolling with Seamless Looping
 ```typescript
-const [focusedIndex, setFocusedIndex] = useState(0);
+// Create infinite scroll array by triplicating items
+const infiniteItems = useMemo(() => {
+  if (items.length === 0) return [];
+  return [...items, ...items, ...items];
+}, [items]);
 
-// Keyboard navigation
-useEffect(() => {
-  const handleKeyPress = (e: KeyboardEvent) => {
-    switch (e.key) {
-      case 'ArrowLeft':
-        setFocusedIndex(prev => Math.max(0, prev - 1));
-        break;
-      case 'ArrowRight':
-        setFocusedIndex(prev => Math.min(items.length - 1, prev + 1));
-        break;
-    }
-  };
-}, [items.length]);
+// Smart repositioning for infinite scroll
+const handleInfiniteScroll = useCallback(() => {
+  if (!carouselRef.current || !items.length) return;
+  
+  const carousel = carouselRef.current;
+  const itemWidth = 384 + 48;
+  
+  // If we're at the start of first section, jump to start of middle section
+  if (infiniteScrollIndex < items.length * 0.5) {
+    const newIndex = infiniteScrollIndex + items.length;
+    setInfiniteScrollIndex(newIndex);
+    carousel.scrollLeft = newIndex * itemWidth;
+  }
+  // If we're at the end of third section, jump to end of middle section  
+  else if (infiniteScrollIndex >= items.length * 2.5) {
+    const newIndex = infiniteScrollIndex - items.length;
+    setInfiniteScrollIndex(newIndex);
+    carousel.scrollLeft = newIndex * itemWidth;
+  }
+}, [infiniteScrollIndex, items.length]);
 ```
 
-**Carousel Features**:
-- **Keyboard Navigation**: Arrow keys for browsing
-- **Focus Management**: Visual feedback for current selection
-- **Smooth Scrolling**: Automatic scroll to focused item
-- **Click Interaction**: Mouse/touch support
-- **Responsive Design**: Adapts to different screen sizes
+**Infinite Scroll Features**:
+- **Triple Array Structure**: Three copies of content for seamless looping
+- **Invisible Repositioning**: Smart jumps between sections without user awareness
+- **Smooth Navigation**: Enhanced keyboard navigation with 400ms debouncing
+- **Perfect Centering**: Viewport-based padding for optimal poster positioning
+- **State Synchronization**: Proper sync between infinite scroll and focused item
+
+#### Enhanced Keyboard Navigation
+```typescript
+const handleKeyDown = useCallback((event: KeyboardEvent) => {
+  // Prevent rapid-fire navigation with debouncing
+  const timeSinceLastKeyPress = currentTime - lastKeyPressTime.current;
+  if (timeSinceLastKeyPress < 400) {
+    event.preventDefault();
+    return;
+  }
+  
+  // Navigate through infinite array while updating focused item
+  setInfiniteScrollIndex(prev => {
+    const newIndex = prev + (direction === 'right' ? 1 : -1);
+    const actualItemIndex = newIndex % items.length;
+    setFocusedIndex(actualItemIndex);
+    
+    requestAnimationFrame(() => {
+      scrollToItem(newIndex, true);
+      setTimeout(() => {
+        handleInfiniteScroll(); // Reposition if needed
+        setIsScrolling(false);
+      }, 600);
+    });
+    return newIndex;
+  });
+}, [items, handleInfiniteScroll]);
+```
 
 ### 6. Streaming Provider Integration
 
@@ -198,7 +242,139 @@ const { data: watchProviders } = useQuery({
 - **Buy**: Purchase options
 - **Regional Support**: Currently supports US providers
 
-### 7. Theme Management
+### 7. Cast Integration System
+
+#### Cast Component with Dual Layout Modes
+```typescript
+interface CastProps {
+  movieId: string;
+  mediaType: 'movie' | 'tv';
+  compact?: boolean; // Toggles between compact and full layouts
+}
+
+const Cast = ({ movieId, mediaType, compact = false }: CastProps) => {
+  const { data: credits } = useQuery({
+    queryKey: ["credits", movieId, mediaType],
+    queryFn: () => tmdbApi.credits({ id: movieId, media_type: mediaType })
+  });
+  
+  return compact ? (
+    // Compact: 5x2 grid for movie detail sidebar
+    <div className="grid grid-cols-5 gap-2">
+      {topCast.slice(0, 10).map(actor => (
+        <CastMember key={actor.id} actor={actor} size="compact" />
+      ))}
+    </div>
+  ) : (
+    // Full: Responsive grid for mobile/tablet
+    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+      {topCast.map(actor => (
+        <CastMember key={actor.id} actor={actor} size="full" />
+      ))}
+    </div>
+  );
+};
+```
+
+**Cast System Features**:
+- **TMDb Credits API**: Fetches cast data from `/movie/{id}/credits` endpoint
+- **Responsive Design**: Compact sidebar layout for desktop, full grid for mobile
+- **Profile Images**: High-quality cast member photos from TMDb CDN
+- **Character Information**: Actor names with character roles
+- **Error Handling**: Graceful fallbacks for missing images or data
+- **Loading States**: Skeleton placeholders during data fetching
+
+#### Integration in Movie Detail Pages
+```typescript
+// Cast positioned strategically in movie detail layout
+<div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+  <div className="lg:col-span-2">
+    {/* Movie poster and main info */}
+  </div>
+  <div className="space-y-6">
+    <StreamingProviders movieId={movieId} mediaType={mediaType} />
+    
+    {/* Cast section - compact layout for sidebar */}
+    <div className="hidden md:block">
+      <Cast movieId={movieId} mediaType={mediaType} compact={true} />
+    </div>
+    
+    {/* Full cast grid for mobile */}
+    <div className="md:hidden">
+      <Cast movieId={movieId} mediaType={mediaType} compact={false} />
+    </div>
+  </div>
+</div>
+```
+
+### 8. UI/UX Enhancement Implementation
+
+#### Movie Poster Optimization
+```typescript
+// Enhanced poster styling with better borders and sizing
+<img 
+  src={`https://image.tmdb.org/t/p/w500${item.poster_path}`} 
+  className={cn(
+    "w-96 h-[600px] object-contain rounded-lg transition-all duration-500",
+    isFocused && "ring-2 ring-white shadow-2xl shadow-white/20"
+  )} 
+/>
+```
+
+**Visual Improvements**:
+- **Poster Size**: Increased from 320x480px to 384x600px for better visibility
+- **Border Refinement**: Reduced ring thickness from 4px to 2px for subtlety
+- **Object Fit**: Changed from `object-cover` to `object-contain` for full poster visibility
+- **Spacing**: Optimized gap sizes for better visual flow
+
+#### Typography and Layout Enhancements
+```typescript
+// Improved text readability and layout
+<p className="leading-relaxed text-gray-200 max-w-5xl text-center text-base font-normal">
+  {selectedItem.overview || 'No description available for this title.'}
+</p>
+```
+
+**Content Improvements**:
+- **Font Size**: Increased description text from `text-sm` to `text-base`
+- **Content Width**: Expanded from `max-w-3xl` to `max-w-5xl` for better readability
+- **Navigation Hints**: Updated to simple "← Navigate →" for clarity
+- **Background Refinement**: Changed overlay from `bg-black/50` to `bg-gray-700/80`
+
+### 9. Footer and Attribution System
+
+#### TMDb Attribution Implementation
+```typescript
+const Footer = () => (
+  <footer className="bg-gray-900 border-t border-gray-800 py-4 mt-auto">
+    <div className="container mx-auto px-4">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <img src="/TMDb_Logo.svg" alt="TMDb" className="h-6 w-auto" />
+          <span className="text-sm text-gray-400">
+            This product uses the TMDb API but is not endorsed or certified by TMDb.
+          </span>
+        </div>
+        <div className="text-xs text-gray-500">
+          Data provided by{" "}
+          <a href="https://www.themoviedb.org/" target="_blank" rel="noopener noreferrer" 
+             className="text-blue-400 hover:text-blue-300 transition-colors">
+            The Movie Database (TMDb)
+          </a>
+        </div>
+      </div>
+    </div>
+  </footer>
+);
+```
+
+**Attribution Features**:
+- **Proper Attribution**: Complies with TMDb API terms of service
+- **Logo Integration**: Official TMDb logo with proper styling
+- **Responsive Design**: Adapts layout for mobile and desktop
+- **External Links**: Proper link handling with security attributes
+
+### 10. Theme Management
 
 #### Dark/Light Mode Toggle
 ```typescript
@@ -214,7 +390,7 @@ onClick={() => setTheme(theme === "light" ? "dark" : "light")}
 - **Smooth Transitions**: CSS transitions for theme changes
 - **Component Consistency**: All UI components support both themes
 
-### 8. Error Handling & Loading States
+### 11. Error Handling & Loading States
 
 #### Comprehensive Error Management
 ```typescript
@@ -238,13 +414,92 @@ try {
 - **Fallback UI**: Error state components
 - **Loading Skeletons**: Placeholder content during loading
 
-### 9. Performance Optimization
+### 12. Performance Optimization
 
 #### Caching & Optimization Strategies
 - **React Query**: Automatic caching and background refetching
 - **Image Optimization**: TMDb CDN for poster images
 - **Code Splitting**: Lazy loading of route components
 - **Bundle Optimization**: Vite's optimized production builds
+- **Infinite Scroll Efficiency**: Smart repositioning reduces DOM manipulation
+- **Debounced Navigation**: Prevents excessive API calls during rapid user input
+
+## Recent Improvements & Updates (v2.0)
+
+### 🚀 Major Feature Additions
+
+#### Infinite Scroll Carousel
+- **True Infinite Scrolling**: Seamless looping where first movie appears after last
+- **Triple Array Architecture**: Invisible content duplication for smooth experience  
+- **Smart Repositioning**: Automatic section jumping without user awareness
+- **Enhanced Debouncing**: 400ms navigation delay for smoother experience
+
+#### Cast Integration System
+- **Full Cast Support**: Complete cast member information with photos
+- **Dual Layout Modes**: Compact sidebar and full responsive grid layouts
+- **TMDb Credits API**: Direct integration with cast/crew endpoints
+- **Responsive Design**: Optimized for all screen sizes
+
+#### Visual & UX Enhancements
+- **Improved Poster Display**: Larger size (384x600px) with refined borders
+- **Better Typography**: Increased font sizes and improved readability
+- **Centered Layout**: Perfect poster centering with viewport-based padding
+- **Refined UI Elements**: Subtle borders, improved spacing, and visual polish
+
+#### Attribution & Compliance
+- **TMDb Footer**: Proper attribution footer with official logo
+- **API Compliance**: Meets all TMDb API terms of service requirements
+- **Legal Integration**: Proper licensing and attribution links
+
+### 🔧 Technical Improvements
+
+#### Enhanced Navigation System
+```typescript
+// Advanced keyboard navigation with state management
+const [infiniteScrollIndex, setInfiniteScrollIndex] = useState(0);
+const [isKeyNavigating, setIsKeyNavigating] = useState(false);
+
+// Debounced navigation prevents rapid-fire scrolling
+const timeSinceLastKeyPress = currentTime - lastKeyPressTime.current;
+if (timeSinceLastKeyPress < 400) {
+  event.preventDefault();
+  return;
+}
+```
+
+#### API Architecture Updates
+```typescript
+// New credits endpoint integration
+async credits(params: { id: string; media_type: string }) {
+  const endpoint = params.media_type === 'tv' 
+    ? `/tv/${params.id}/credits`
+    : `/movie/${params.id}/credits`;
+  return this.get(endpoint);
+}
+```
+
+#### State Management Improvements
+- **Dual Index System**: Separate tracking for infinite scroll and focused items
+- **Smart Synchronization**: Proper state sync between navigation systems
+- **Enhanced Error Recovery**: Better fallback handling for edge cases
+
+### 🎨 Design System Updates
+
+#### Component Architecture
+- **Cast Component**: New reusable cast display component
+- **Footer Component**: Dedicated attribution footer
+- **Enhanced Carousel**: Completely rebuilt with infinite scroll capability
+
+#### Styling Improvements
+- **Tailwind Optimization**: Custom utilities and improved responsive classes
+- **Visual Hierarchy**: Better contrast and spacing throughout
+- **Animation Refinements**: Smoother transitions and micro-interactions
+
+### 📱 Accessibility Enhancements
+- **Keyboard Navigation**: Full accessibility support with proper ARIA attributes
+- **Screen Reader Support**: Enhanced semantic markup
+- **Focus Management**: Improved focus states and navigation flow
+- **Responsive Typography**: Better text scaling across devices
 
 ## API Integration Details
 
@@ -255,6 +510,7 @@ The application uses a custom API wrapper that interfaces with TMDb through Supa
 - **Trending**: `/trending/all/week` - Weekly trending content
 - **Movie Details**: `/movie/{id}` - Individual movie information
 - **TV Details**: `/tv/{id}` - Individual TV show information
+- **Credits**: `/movie/{id}/credits` & `/tv/{id}/credits` - Cast and crew information
 - **Watch Providers**: `/movie/{id}/watch/providers` - Streaming availability
 
 #### Data Transformation:
@@ -335,16 +591,20 @@ bun run preview
 
 ### Feature Additions
 - **User Authentication**: Personal watchlists and preferences
-- **Advanced Search**: Filters by genre, year, rating
-- **Recommendations**: Personalized content suggestions
-- **Multi-language Support**: International content and UI
-- **Social Features**: Sharing and reviews
+- **Advanced Search**: Filters by genre, year, rating, and cast
+- **Recommendations**: AI-powered personalized content suggestions
+- **Multi-language Support**: International content and UI localization
+- **Social Features**: User reviews, ratings, and sharing capabilities
+- **Watchlist Management**: Save and organize favorite content
+- **Recently Viewed**: Track viewing history and resume functionality
 
 ### Technical Improvements
 - **Progressive Web App**: Offline capability and app-like experience
-- **Performance Monitoring**: Analytics and performance tracking
-- **A/B Testing**: Feature experimentation framework
-- **SEO Optimization**: Server-side rendering for better indexing
+- **Performance Monitoring**: Real-time analytics and performance tracking
+- **A/B Testing**: Feature experimentation and user behavior analysis
+- **SEO Optimization**: Server-side rendering for better search indexing
+- **Enhanced Caching**: Redis integration for faster data retrieval
+- **Microservices**: API architecture improvements for scalability
 
 ## Troubleshooting Guide
 
